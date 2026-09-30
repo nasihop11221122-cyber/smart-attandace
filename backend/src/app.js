@@ -6,6 +6,8 @@ import { env } from './config/env.js';
 import authRoutes from './routes/authRoutes.js';
 import principalRoutes from './routes/principalRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import teacherRoutes from './routes/teacherRoutes.js';
+import classRoutes from './routes/classRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
 
 const app = express();
@@ -34,6 +36,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/principals', principalRoutes);
 app.use('/api/admins', adminRoutes);
+app.use('/api/principal/teachers', teacherRoutes);
+app.use('/api/principal/classes', classRoutes);
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
