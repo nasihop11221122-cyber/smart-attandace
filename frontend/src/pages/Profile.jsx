@@ -36,7 +36,7 @@ export default function Profile() {
       toast.success(`${label} updated successfully`);
       setEditing(null);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Server se connect nahi ho saka');
+      toast.error(err.response?.data?.message || 'Could not connect to the server');
     } finally {
       setBusy(false);
     }
@@ -46,9 +46,9 @@ export default function Profile() {
     setSending(true);
     try {
       await api.post('/auth/forgot-password', { email: user.email });
-      toast.success('Reset link aapki email par bhej diya gaya hai');
+      toast.success('Reset link has been sent to your email');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Server se connect nahi ho saka');
+      toast.error(err.response?.data?.message || 'Could not connect to the server');
     } finally {
       setSending(false);
     }
@@ -87,7 +87,7 @@ export default function Profile() {
                       disabled={sending}
                       className="self-start text-sm text-blue-700 hover:underline disabled:opacity-60"
                     >
-                      {sending ? 'Sending…' : 'Current password bhool gaye? Email par reset link bhejein'}
+                      {sending ? 'Sending…' : 'Forgot your current password? Send a reset link to your email'}
                     </button>
                     <label className={labelClass}>
                       New Password

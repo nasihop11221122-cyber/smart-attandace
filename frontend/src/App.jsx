@@ -14,9 +14,13 @@ import Teachers from './pages/Teachers';
 import Students from './pages/Students';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
-import PrincipalDashboard from './pages/PrincipalDashboard';
+import PrincipalDashboard from './pages/principal/PrincipalDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard';
+import PrincipalHome from './pages/principal/PrincipalHome.jsx';
+import PrincipalTeacher from './pages/principal/PrincipalTeacher.jsx';
+import PrincipalHistory from './pages/principal/PrincipalHistory.jsx';
+import PrincipalProfile from './pages/principal/PrincipalProfile.jsx';
 
 export default function App() {
   return (
@@ -45,7 +49,12 @@ export default function App() {
           <Route
             path="/principal"
             element={<ProtectedRoute role="principal"><PrincipalDashboard /></ProtectedRoute>}
-          />
+          >
+            <Route index element={<PrincipalHome />} />
+            <Route path="teacher" element={<PrincipalTeacher />} />
+            <Route path="history" element={<PrincipalHistory />} />
+            <Route path="profile" element={<PrincipalProfile />} />
+          </Route>
           <Route
             path="/teacher"
             element={<ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>}
