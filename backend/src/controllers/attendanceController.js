@@ -1,4 +1,5 @@
 import Attendance from '../models/Attendance.js';
+import AttendanceDraft from '../models/AttendanceDraft.js';
 import Student from '../models/Student.js';
 import User from '../models/User.js';
 import { dateInSchoolZone } from '../utils/schoolDate.js';
@@ -19,11 +20,14 @@ export const getAttendance = async (req, res) => {
   if (!isToday(date)) return res.status(400).json({ message: BAD_DATE });
 
   const className = await getTeacherClass(req);
-  if (!className) return res.json({ className: '', date, submitted: false, students: [] });
+  if (!className) {
+    return res.json({ className: '', date, submitted: false, draft: null, students: [] });
+  }
 
-  const [students, saved, countRows] = await Promise.all([
+  const [students, saved, draft, countRows] = await Promise.all([
     Student.find({ className }).sort({ rollNo: 1 }),
     Attendance.findOne({ className, date }),
+    AttendanceDraft.findOne({ className, date }),
     Attendance.aggregate([
       { $match: { className } },
       { $unwind: '$records' },
@@ -50,6 +54,14 @@ export const getAttendance = async (req, res) => {
     className,
     date,
     submitted: Boolean(saved),
+    draft:
+      !saved && draft
+        ? {
+            absent: draft.absent.map(String),
+            leave: draft.leave.map(String),
+            updatedAt: draft.updatedAt,
+          }
+        : null,
     students: students.map((s) => {
       const id = String(s._id);
       return {
@@ -63,6 +75,34 @@ export const getAttendance = async (req, res) => {
       };
     }),
   });
+};
+
+export const saveDraft = async (req, res) => {
+  const { date, absent, leave } = req.body;
+  if (!isToday(date)) return res.status(400).json({ message: BAD_DATE });
+
+  const className = await getTeacherClass(req);
+  if (!className) return res.status(400).json({ message: NO_CLASS });
+
+  const alreadyDone = await Attendance.exists({ className, date });
+  if (alreadyDone) return res.status(409).json({ message: ALREADY });
+
+  const save = () =>
+    AttendanceDraft.findOneAndUpdate(
+      { className, date },
+      { teacher: req.user._id, absent, leave },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+  let draft;
+  try {
+    draft = await save();
+  } catch (err) {
+    if (err.code === 11000) draft = await save();
+    else throw err;
+  }
+
+  res.json({ updatedAt: draft.updatedAt });
 };
 
 export const createAttendance = async (req, res) => {
@@ -93,9 +133,14 @@ export const createAttendance = async (req, res) => {
 
   try {
     await Attendance.create({ className, date, teacher: req.user._id, records });
-    res.status(201).json({ message: 'Attendance submitted successfully' });
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ message: ALREADY });
     throw err;
   }
+
+  await AttendanceDraft.deleteOne({ className, date }).catch((err) =>
+    console.error('Draft cleanup failed:', err.message)
+  );
+
+  res.status(201).json({ message: 'Attendance submitted successfully' });
 };

@@ -1,5 +1,9 @@
 import { Router } from 'express';
-import { getAttendance, createAttendance } from '../controllers/attendanceController.js';
+import {
+  getAttendance,
+  saveDraft,
+  createAttendance,
+} from '../controllers/attendanceController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { attendanceSchema } from '../validators/attendanceValidators.js';
@@ -19,6 +23,7 @@ const onlyTeacher = (req, res, next) => {
 router.use(protect, onlyTeacher);
 
 router.get('/', wrap(getAttendance));
+router.put('/draft', validate(attendanceSchema), wrap(saveDraft));
 router.post('/', validate(attendanceSchema), wrap(createAttendance));
 
 export default router;

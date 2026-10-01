@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import AttendancePreviewModal from '../../components/teacher/AttendancePreviewModal';
 
 const STATUSES = [
   { key: 'present', label: 'Present', active: 'border-green-600 bg-green-600 text-white' },
@@ -14,6 +15,9 @@ const todayLocal = () => {
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
+
+const formatTime = (ms) =>
+  new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const readJSON = (key) => {
   try {
@@ -40,6 +44,9 @@ const removeKey = (key) => {
   }
 };
 
+const outlineButton =
+  'rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60';
+
 export default function TeacherAttendance() {
   const { user } = useAuth();
   const [date] = useState(todayLocal);
@@ -51,27 +58,59 @@ export default function TeacherAttendance() {
   const [submitted, setSubmitted] = useState(false);
   const [marks, setMarks] = useState({});
   const [pendingSend, setPendingSend] = useState(false);
+  const [draftTime, setDraftTime] = useState(null);
+  const [dirty, setDirty] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const restoreDraft = useCallback(
-    (list) => {
-      const draft = readJSON(draftKey);
-      if (!draft || draft.date !== date) {
-        if (draft) removeKey(draftKey);
-        setMarks({});
-        setPendingSend(false);
+    (list, serverDraft) => {
+      const ids = new Set(list.map((s) => s.id));
+
+      const local = readJSON(draftKey);
+      const localValid = Boolean(local) && local.date === date;
+      if (local && !localValid) removeKey(draftKey);
+
+      const serverTime = serverDraft ? Date.parse(serverDraft.updatedAt) : 0;
+
+      // Is device par naye changes jo server tak nahi pahunche
+      if (localValid && (!serverDraft || (local.savedAt || 0) > serverTime)) {
+        const restored = {};
+        Object.entries(local.marks || {}).forEach(([id, status]) => {
+          if (ids.has(id) && (status === 'absent' || status === 'leave')) restored[id] = status;
+        });
+        setMarks(restored);
+        setPendingSend(true);
+        setDraftTime(serverDraft ? serverTime : null);
+        setDirty(true);
         return;
       }
-      const ids = new Set(list.map((s) => s.id));
-      const restored = {};
-      Object.entries(draft.marks || {}).forEach(([id, status]) => {
-        if (ids.has(id) && (status === 'absent' || status === 'leave')) restored[id] = status;
-      });
-      setMarks(restored);
-      setPendingSend(true);
+
+      // Server par save kiya hua draft
+      if (serverDraft) {
+        const restored = {};
+        (serverDraft.absent || []).forEach((id) => {
+          if (ids.has(id)) restored[id] = 'absent';
+        });
+        (serverDraft.leave || []).forEach((id) => {
+          if (ids.has(id)) restored[id] = 'leave';
+        });
+        if (localValid) removeKey(draftKey);
+        setMarks(restored);
+        setPendingSend(false);
+        setDraftTime(serverTime);
+        setDirty(false);
+        return;
+      }
+
+      setMarks({});
+      setPendingSend(false);
+      setDraftTime(null);
+      setDirty(false);
     },
     [draftKey, date]
   );
@@ -89,8 +128,10 @@ export default function TeacherAttendance() {
         removeKey(draftKey);
         setMarks({});
         setPendingSend(false);
+        setDraftTime(null);
+        setDirty(false);
       } else {
-        restoreDraft(list);
+        restoreDraft(list, res.data.draft);
       }
     } catch (err) {
       if (!err.response) {
@@ -99,7 +140,7 @@ export default function TeacherAttendance() {
           setClassLabel(cached.className);
           setStudents(cached.students);
           setSubmitted(false);
-          restoreDraft(cached.students);
+          restoreDraft(cached.students, null);
         } else {
           toast.error('Could not connect to the server');
         }
@@ -134,14 +175,48 @@ export default function TeacherAttendance() {
     if (status === 'present') delete next[id];
     else next[id] = status;
     setMarks(next);
-    writeJSON(draftKey, { date, marks: next });
+    setDirty(true);
+    writeJSON(draftKey, { date, marks: next, savedAt: Date.now() });
+  };
+
+  const splitMarks = () => ({
+    absent: students.filter((s) => marks[s.id] === 'absent').map((s) => s.id),
+    leave: students.filter((s) => marks[s.id] === 'leave').map((s) => s.id),
+  });
+
+  const saveDraft = async () => {
+    setSavingDraft(true);
+    const { absent, leave } = splitMarks();
+    try {
+      const res = await api.put('/teacher/attendance/draft', { date, absent, leave });
+      removeKey(draftKey);
+      setDraftTime(Date.parse(res.data.updatedAt));
+      setDirty(false);
+      setPendingSend(false);
+      toast.success('Draft saved');
+    } catch (err) {
+      if (!err.response) {
+        writeJSON(draftKey, { date, marks, savedAt: Date.now() });
+        setPendingSend(true);
+        toast.error(
+          'No network. Draft is saved on this device only. Press Draft again when the network is back.'
+        );
+      } else {
+        toast.error(err.response.data?.message || 'Could not connect to the server');
+        if (err.response.status === 409) {
+          removeKey(draftKey);
+          await load();
+        }
+      }
+    } finally {
+      setSavingDraft(false);
+    }
   };
 
   const submit = async () => {
     setConfirming(false);
     setBusy(true);
-    const absent = students.filter((s) => marks[s.id] === 'absent').map((s) => s.id);
-    const leave = students.filter((s) => marks[s.id] === 'leave').map((s) => s.id);
+    const { absent, leave } = splitMarks();
     try {
       await api.post('/teacher/attendance', { date, absent, leave });
       removeKey(draftKey);
@@ -149,7 +224,7 @@ export default function TeacherAttendance() {
       await load();
     } catch (err) {
       if (!err.response) {
-        writeJSON(draftKey, { date, marks });
+        writeJSON(draftKey, { date, marks, savedAt: Date.now() });
         setPendingSend(true);
         toast.error(
           'No network. Attendance is saved as a draft on this device. Press Submit when the network is back.'
@@ -166,9 +241,11 @@ export default function TeacherAttendance() {
     }
   };
 
+  const locked = busy || savingDraft;
+
   return (
     <div>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-2xl font-semibold text-slate-800">Attendance</h2>
           {classLabel && (
@@ -178,21 +255,29 @@ export default function TeacherAttendance() {
           )}
         </div>
 
-        {classLabel && students.length > 0 && (
-          submitted ? (
+        {classLabel &&
+          students.length > 0 &&
+          (submitted ? (
             <span className="shrink-0 rounded-md bg-green-50 px-3 py-2 text-sm font-semibold text-green-700">
               Submitted
             </span>
           ) : (
-            <button
-              onClick={() => setConfirming(true)}
-              disabled={busy}
-              className="shrink-0 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {busy ? 'Please wait…' : 'Submit'}
-            </button>
-          )
-        )}
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <button onClick={saveDraft} disabled={locked} className={outlineButton}>
+                {savingDraft ? 'Saving…' : 'Draft'}
+              </button>
+              <button onClick={() => setPreviewing(true)} disabled={locked} className={outlineButton}>
+                Preview
+              </button>
+              <button
+                onClick={() => setConfirming(true)}
+                disabled={locked}
+                className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {busy ? 'Please wait…' : 'Submit'}
+              </button>
+            </div>
+          ))}
       </div>
 
       {!online && (
@@ -201,9 +286,16 @@ export default function TeacherAttendance() {
         </p>
       )}
 
+      {!submitted && draftTime && !dirty && !pendingSend && (
+        <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Draft saved at {formatTime(draftTime)}. Mark late students when they arrive, then press
+          Submit.
+        </p>
+      )}
+
       {pendingSend && !submitted && (
         <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-          Unsent attendance is saved on this device. Press Submit to send it to the server.
+          Unsent attendance is saved on this device. Press Draft or Submit to send it to the server.
         </p>
       )}
 
@@ -266,6 +358,21 @@ export default function TeacherAttendance() {
             );
           })}
         </div>
+      )}
+
+      {previewing && (
+        <AttendancePreviewModal
+          classLabel={classLabel}
+          date={date}
+          students={students}
+          marks={marks}
+          busy={busy}
+          onClose={() => setPreviewing(false)}
+          onSubmit={() => {
+            setPreviewing(false);
+            submit();
+          }}
+        />
       )}
 
       {confirming && (
