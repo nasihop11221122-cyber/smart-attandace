@@ -8,6 +8,9 @@ import principalRoutes from './routes/principalRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import teacherRoutes from './routes/teacherRoutes.js';
 import classRoutes from './routes/classRoutes.js';
+import studentRoutes from './routes/studentRoutes.js';
+import attendanceRoutes from './routes/attendanceRoutes.js';
+import historyRoutes from './routes/historyRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
 
 const app = express();
@@ -38,6 +41,9 @@ app.use('/api/principals', principalRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/api/principal/teachers', teacherRoutes);
 app.use('/api/principal/classes', classRoutes);
+app.use('/api/principal/history', historyRoutes);
+app.use('/api/teacher/students', studentRoutes);
+app.use('/api/teacher/attendance', attendanceRoutes);
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
