@@ -15,12 +15,15 @@ import Students from './pages/Students';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import PrincipalDashboard from './pages/principal/PrincipalDashboard';
-import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
 import StudentDashboard from './pages/StudentDashboard';
 import PrincipalHome from './pages/principal/PrincipalHome.jsx';
 import PrincipalTeacher from './pages/principal/PrincipalTeacher.jsx';
 import PrincipalHistory from './pages/principal/PrincipalHistory.jsx';
 import PrincipalProfile from './pages/principal/PrincipalProfile.jsx';
+import TeacherStudents from './pages/teacher/TeacherStudents.jsx';
+import TeacherAttendance from './pages/teacher/TeacherAttendance.jsx';
+import TeacherProfile from './pages/teacher/TeacherProfile.jsx';
 
 export default function App() {
   return (
@@ -58,7 +61,12 @@ export default function App() {
           <Route
             path="/teacher"
             element={<ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>}
-          />
+          >
+            <Route index element={<Navigate to="students" replace />} />
+            <Route path="students" element={<TeacherStudents />} />
+            <Route path="attendance" element={<TeacherAttendance />} />
+            <Route path="profile" element={<TeacherProfile />} />
+          </Route>
           <Route
             path="/student"
             element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
