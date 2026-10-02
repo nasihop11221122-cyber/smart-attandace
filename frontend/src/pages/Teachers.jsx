@@ -32,7 +32,7 @@ export default function Teachers() {
     return (
       <div className="p-6">
         <ClassStudentsView
-          endpoint="/super-admin/students"
+          basePath="/super-admin"
           classLabel={selected.className}
           teacherName={selected.name}
           onBack={() => setSelected(null)}

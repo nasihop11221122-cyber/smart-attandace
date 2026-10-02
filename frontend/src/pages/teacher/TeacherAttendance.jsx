@@ -61,6 +61,7 @@ export default function TeacherAttendance() {
   const [pendingSend, setPendingSend] = useState(false);
   const [draftTime, setDraftTime] = useState(null);
   const [dirty, setDirty] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -88,6 +89,7 @@ export default function TeacherAttendance() {
         setPendingSend(true);
         setDraftTime(serverDraft ? serverTime : null);
         setDirty(true);
+        setUnlocked(Boolean(serverDraft?.unlocked));
         return;
       }
 
@@ -105,6 +107,7 @@ export default function TeacherAttendance() {
         setPendingSend(false);
         setDraftTime(serverTime);
         setDirty(false);
+        setUnlocked(Boolean(serverDraft.unlocked));
         return;
       }
 
@@ -112,6 +115,7 @@ export default function TeacherAttendance() {
       setPendingSend(false);
       setDraftTime(null);
       setDirty(false);
+      setUnlocked(false);
     },
     [draftKey]
   );
@@ -133,6 +137,7 @@ export default function TeacherAttendance() {
         setPendingSend(false);
         setDraftTime(null);
         setDirty(false);
+        setUnlocked(false);
       } else {
         restoreDraft(list, res.data.draft, today);
       }
@@ -174,6 +179,15 @@ export default function TeacherAttendance() {
       window.removeEventListener('offline', goOffline);
     };
   }, [load]);
+
+  // Attendance submit ho chuki ho to dekhte rahein, shayad principal ne unlock kar di ho
+  useEffect(() => {
+    if (!submitted) return undefined;
+    const timer = setInterval(() => {
+      if (!document.hidden) load();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [submitted, load]);
 
   const setStatus = (id, status) => {
     const next = { ...marks };
@@ -302,7 +316,14 @@ export default function TeacherAttendance() {
         </p>
       )}
 
-      {!submitted && draftTime && !dirty && !pendingSend && (
+      {!submitted && unlocked && (
+        <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          The principal has unlocked the attendance for today. Make the corrections and press
+          Submit again.
+        </p>
+      )}
+
+      {!submitted && !unlocked && draftTime && !dirty && !pendingSend && (
         <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           Draft saved at {formatTime(draftTime)}. Mark late students when they arrive, then press
           Submit.

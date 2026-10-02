@@ -61,6 +61,7 @@ export const getAttendance = async (req, res) => {
             absent: draft.absent.map(String),
             leave: draft.leave.map(String),
             updatedAt: draft.updatedAt,
+            unlocked: Boolean(draft.unlockedAt),
           }
         : null,
     students: students.map((s) => {

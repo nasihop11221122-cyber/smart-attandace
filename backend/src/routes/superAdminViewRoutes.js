@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { getTeachers } from '../controllers/teacherController.js';
-import { getClassStudents } from '../controllers/historyController.js';
+import {
+  getClassStudents,
+  getStudentDays,
+  getClassDay,
+} from '../controllers/historyController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = Router();
@@ -20,5 +24,7 @@ router.use(protect, onlySuperAdmin);
 // Sirf dekhne ke liye (GET), koi create, update ya delete nahi
 router.get('/teachers', wrap(getTeachers));
 router.get('/students', wrap(getClassStudents));
+router.get('/student/:id', wrap(getStudentDays));
+router.get('/day', wrap(getClassDay));
 
 export default router;

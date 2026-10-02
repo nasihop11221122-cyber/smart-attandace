@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Attendance from '../models/Attendance.js';
 import Student from '../models/Student.js';
 import User from '../models/User.js';
@@ -59,6 +60,57 @@ export const getClassStudents = async (req, res) => {
       rollNo: s.rollNo,
       className: s.className,
       counts: counts.get(String(s._id)) || { present: 0, absent: 0, leave: 0 },
+    })),
+  });
+};
+
+// Ek bache ki har din ki attendance (nayi se purani)
+export const getStudentDays = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) return res.status(404).json({ message: 'Student not found' });
+
+  const student = await Student.findById(id).select('className');
+  if (!student) return res.status(404).json({ message: 'Student not found' });
+
+  const studentId = new mongoose.Types.ObjectId(id);
+  const days = await Attendance.aggregate([
+    { $match: { className: student.className } },
+    { $unwind: '$records' },
+    { $match: { 'records.student': studentId } },
+    { $project: { _id: 0, date: 1, status: '$records.status' } },
+    { $sort: { date: -1 } },
+  ]);
+
+  res.json({ days });
+};
+
+// Kisi ek din ki poori class ki attendance
+export const getClassDay = async (req, res) => {
+  const { className, date } = req.query;
+  if (typeof className !== 'string' || !className.trim()) {
+    return res.status(400).json({ message: 'Class name is required' });
+  }
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({ message: 'A valid date is required' });
+  }
+  const name = className.trim();
+
+  const [students, attendance] = await Promise.all([
+    Student.find({ className: name }).sort({ rollNo: 1 }),
+    Attendance.findOne({ className: name, date }),
+  ]);
+
+  const statusById = new Map((attendance?.records || []).map((r) => [String(r.student), r.status]));
+
+  res.json({
+    date,
+    submitted: Boolean(attendance),
+    students: students.map((s) => ({
+      id: s._id,
+      name: s.name,
+      fatherName: s.fatherName,
+      rollNo: s.rollNo,
+      status: statusById.get(String(s._id)) || null,
     })),
   });
 };

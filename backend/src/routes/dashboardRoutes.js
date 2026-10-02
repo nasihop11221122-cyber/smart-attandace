@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDashboard } from '../controllers/dashboardController.js';
+import { unlockAttendance } from '../controllers/unlockController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = Router();
@@ -17,5 +18,6 @@ const onlyPrincipal = (req, res, next) => {
 router.use(protect, onlyPrincipal);
 
 router.get('/', wrap(getDashboard));
+router.post('/attendance/:id/unlock', wrap(unlockAttendance));
 
 export default router;

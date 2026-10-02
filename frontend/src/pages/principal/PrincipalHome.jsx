@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
 import AttendanceOverview from '../../components/principle/AttendanceOverview';
+import UnlockAttendanceModal from '../../components/principle/UnlockAttendanceModal';
 
 const POLL_MS = 20000;
 
@@ -97,6 +98,7 @@ export default function PrincipalHome() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [fresh, setFresh] = useState(() => new Set());
+  const [unlocking, setUnlocking] = useState(null);
   const knownRef = useRef(null);
 
   const load = useCallback(async () => {
@@ -225,6 +227,17 @@ export default function PrincipalHome() {
                     {formatTime(n.time)} · Present {n.present} · Absent {n.absent} · Leave {n.leave}
                   </p>
                 </div>
+                <button
+                  onClick={() => setUnlocking(n)}
+                  title="Unlock attendance"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                >
+                  <Svg className="h-3.5 w-3.5">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                  </Svg>
+                  Unlock
+                </button>
               </li>
             ))}
           </ul>
@@ -263,6 +276,14 @@ export default function PrincipalHome() {
           }
         />
       </div>
+
+      {unlocking && (
+        <UnlockAttendanceModal
+          notification={unlocking}
+          onClose={() => setUnlocking(null)}
+          onUnlocked={load}
+        />
+      )}
     </div>
   );
 }

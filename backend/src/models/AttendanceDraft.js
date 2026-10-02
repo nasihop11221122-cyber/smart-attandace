@@ -7,6 +7,8 @@ const attendanceDraftSchema = new mongoose.Schema(
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     absent: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
     leave: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Student' }],
+    unlockedAt: { type: Date },
+    unlockedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );

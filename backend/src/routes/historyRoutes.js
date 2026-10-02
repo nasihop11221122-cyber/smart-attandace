@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { getHistoryClasses, getClassStudents } from '../controllers/historyController.js';
+import {
+  getHistoryClasses,
+  getClassStudents,
+  getStudentDays,
+  getClassDay,
+} from '../controllers/historyController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = Router();
@@ -18,5 +23,7 @@ router.use(protect, onlyPrincipal);
 
 router.get('/classes', wrap(getHistoryClasses));
 router.get('/students', wrap(getClassStudents));
+router.get('/student/:id', wrap(getStudentDays));
+router.get('/day', wrap(getClassDay));
 
 export default router;
