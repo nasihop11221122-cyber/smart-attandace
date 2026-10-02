@@ -56,7 +56,7 @@ export default function Teachers() {
               key={t.id}
               className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg"
             >
-              <div className="h-1.5 bg-gradient-to-r from-blue-700 to-blue-400" />
+              <div className="h-1.5 bg-linear-to-r from-blue-700 to-blue-400" />
 
               <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-center gap-4">

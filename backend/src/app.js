@@ -13,6 +13,8 @@ import attendanceRoutes from './routes/attendanceRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import superAdminViewRoutes from './routes/superAdminViewRoutes.js';
+import onlineClassRoutes from './routes/onlineClassRoutes.js';
+import onlineStudentRoutes from './routes/onlineStudentRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
 
 const app = express();
@@ -48,6 +50,8 @@ app.use('/api/principal/dashboard', dashboardRoutes);
 app.use('/api/teacher/students', studentRoutes);
 app.use('/api/teacher/attendance', attendanceRoutes);
 app.use('/api/super-admin', superAdminViewRoutes);
+app.use('/api/admin/classes', onlineClassRoutes);
+app.use('/api/admin/students', onlineStudentRoutes);
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 

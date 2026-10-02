@@ -5,7 +5,12 @@ import api from '../../api/axios';
 const inputClass =
   'rounded-md border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-800 outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/20';
 
-export default function ClassSelect({ value, onChange, currentClass = '' }) {
+export default function ClassSelect({
+  value,
+  onChange,
+  currentClass = '',
+  endpoint = '/principal/classes',
+}) {
   const [classes, setClasses] = useState([]);
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -15,12 +20,12 @@ export default function ClassSelect({ value, onChange, currentClass = '' }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get('/principal/classes');
+      const res = await api.get(endpoint);
       setClasses(res.data.classes);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not connect to the server');
     }
-  }, []);
+  }, [endpoint]);
 
   useEffect(() => {
     load();
@@ -39,7 +44,7 @@ export default function ClassSelect({ value, onChange, currentClass = '' }) {
     if (!name) return;
     setBusy(true);
     try {
-      const res = await api.post('/principal/classes', { name });
+      const res = await api.post(endpoint, { name });
       await load();
       onChange(res.data.classItem.name);
       setNewName('');
@@ -54,7 +59,7 @@ export default function ClassSelect({ value, onChange, currentClass = '' }) {
 
   const removeClass = async (item) => {
     try {
-      await api.delete(`/principal/classes/${item.id}`);
+      await api.delete(`${endpoint}/${item.id}`);
       setClasses((prev) => prev.filter((c) => c.id !== item.id));
       if (value === item.name) onChange('');
       toast.success('Class deleted successfully');
