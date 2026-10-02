@@ -10,6 +10,7 @@ const STATUSES = [
   { key: 'leave', label: 'Leave', active: 'border-amber-500 bg-amber-500 text-white' },
 ];
 
+// Sirf tab kaam aata hai jab server tak pahunch na ho (offline)
 const todayLocal = () => {
   const d = new Date();
   const pad = (n) => String(n).padStart(2, '0');
@@ -49,7 +50,7 @@ const outlineButton =
 
 export default function TeacherAttendance() {
   const { user } = useAuth();
-  const [date] = useState(todayLocal);
+  const [date, setDate] = useState(todayLocal);
   const draftKey = `attendance-draft:${user.id}`;
   const cacheKey = `attendance-students:${user.id}`;
 
@@ -68,11 +69,11 @@ export default function TeacherAttendance() {
   const [savingDraft, setSavingDraft] = useState(false);
 
   const restoreDraft = useCallback(
-    (list, serverDraft) => {
+    (list, serverDraft, today) => {
       const ids = new Set(list.map((s) => s.id));
 
       const local = readJSON(draftKey);
-      const localValid = Boolean(local) && local.date === date;
+      const localValid = Boolean(local) && local.date === today;
       if (local && !localValid) removeKey(draftKey);
 
       const serverTime = serverDraft ? Date.parse(serverDraft.updatedAt) : 0;
@@ -112,13 +113,15 @@ export default function TeacherAttendance() {
       setDraftTime(null);
       setDirty(false);
     },
-    [draftKey, date]
+    [draftKey]
   );
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get('/teacher/attendance', { params: { date } });
+      const res = await api.get('/teacher/attendance');
+      const today = res.data.date;
       const list = res.data.students;
+      setDate(today);
       setClassLabel(res.data.className);
       setStudents(list);
       setSubmitted(res.data.submitted);
@@ -131,16 +134,18 @@ export default function TeacherAttendance() {
         setDraftTime(null);
         setDirty(false);
       } else {
-        restoreDraft(list, res.data.draft);
+        restoreDraft(list, res.data.draft, today);
       }
     } catch (err) {
       if (!err.response) {
         const cached = readJSON(cacheKey);
         if (cached) {
+          const today = todayLocal();
+          setDate(today);
           setClassLabel(cached.className);
           setStudents(cached.students);
           setSubmitted(false);
-          restoreDraft(cached.students, null);
+          restoreDraft(cached.students, null, today);
         } else {
           toast.error('Could not connect to the server');
         }
@@ -150,7 +155,7 @@ export default function TeacherAttendance() {
     } finally {
       setLoading(false);
     }
-  }, [date, cacheKey, draftKey, restoreDraft]);
+  }, [cacheKey, draftKey, restoreDraft]);
 
   useEffect(() => {
     load();
@@ -184,6 +189,13 @@ export default function TeacherAttendance() {
     leave: students.filter((s) => marks[s.id] === 'leave').map((s) => s.id),
   });
 
+  // Naya din shuru ho chuka hai, page raat bhar khula tha
+  const handleNewDay = async () => {
+    removeKey(draftKey);
+    toast.error('A new day has started. The page was refreshed.');
+    await load();
+  };
+
   const saveDraft = async () => {
     setSavingDraft(true);
     const { absent, leave } = splitMarks();
@@ -201,6 +213,8 @@ export default function TeacherAttendance() {
         toast.error(
           'No network. Draft is saved on this device only. Press Draft again when the network is back.'
         );
+      } else if (err.response.data?.code === 'DATE_MISMATCH') {
+        await handleNewDay();
       } else {
         toast.error(err.response.data?.message || 'Could not connect to the server');
         if (err.response.status === 409) {
@@ -229,6 +243,8 @@ export default function TeacherAttendance() {
         toast.error(
           'No network. Attendance is saved as a draft on this device. Press Submit when the network is back.'
         );
+      } else if (err.response.data?.code === 'DATE_MISMATCH') {
+        await handleNewDay();
       } else {
         toast.error(err.response.data?.message || 'Could not connect to the server');
         if (err.response.status === 409) {

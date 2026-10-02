@@ -11,6 +11,7 @@ import classRoutes from './routes/classRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 import superAdminViewRoutes from './routes/superAdminViewRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
 
@@ -43,6 +44,7 @@ app.use('/api/admins', adminRoutes);
 app.use('/api/principal/teachers', teacherRoutes);
 app.use('/api/principal/classes', classRoutes);
 app.use('/api/principal/history', historyRoutes);
+app.use('/api/principal/dashboard', dashboardRoutes);
 app.use('/api/teacher/students', studentRoutes);
 app.use('/api/teacher/attendance', attendanceRoutes);
 app.use('/api/super-admin', superAdminViewRoutes);

@@ -15,9 +15,10 @@ const getTeacherClass = async (req) => {
 
 const isToday = (date) => typeof date === 'string' && date === dateInSchoolZone();
 
+const dateMismatch = (res) => res.status(400).json({ message: BAD_DATE, code: 'DATE_MISMATCH' });
+
 export const getAttendance = async (req, res) => {
-  const { date } = req.query;
-  if (!isToday(date)) return res.status(400).json({ message: BAD_DATE });
+  const date = dateInSchoolZone();
 
   const className = await getTeacherClass(req);
   if (!className) {
@@ -79,7 +80,7 @@ export const getAttendance = async (req, res) => {
 
 export const saveDraft = async (req, res) => {
   const { date, absent, leave } = req.body;
-  if (!isToday(date)) return res.status(400).json({ message: BAD_DATE });
+  if (!isToday(date)) return dateMismatch(res);
 
   const className = await getTeacherClass(req);
   if (!className) return res.status(400).json({ message: NO_CLASS });
@@ -107,7 +108,7 @@ export const saveDraft = async (req, res) => {
 
 export const createAttendance = async (req, res) => {
   const { date, absent, leave } = req.body;
-  if (!isToday(date)) return res.status(400).json({ message: BAD_DATE });
+  if (!isToday(date)) return dateMismatch(res);
 
   const className = await getTeacherClass(req);
   if (!className) return res.status(400).json({ message: NO_CLASS });

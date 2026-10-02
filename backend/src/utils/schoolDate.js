@@ -1,4 +1,4 @@
-const SCHOOL_TIME_ZONE = 'Asia/Karachi';
+export const SCHOOL_TIME_ZONE = 'Asia/Karachi';
 
 const formatter = new Intl.DateTimeFormat('en-US', {
   timeZone: SCHOOL_TIME_ZONE,
