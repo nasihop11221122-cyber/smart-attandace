@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     // Abhi register hone wala har user super_admin hai (aapki requirement). Baad me isay change kar lena.
     role: { type: String, enum: ['super_admin', 'admin', 'principal', 'teacher', 'student', 'user'], default: 'super_admin' },
     className: { type: String, trim: true, maxlength: 60 },
+    semester: { type: String, trim: true, maxlength: 30 },
     rollNo: { type: String, trim: true, maxlength: 30 },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpires: { type: Date, select: false },

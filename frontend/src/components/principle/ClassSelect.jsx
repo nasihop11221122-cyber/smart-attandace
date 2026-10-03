@@ -10,6 +10,11 @@ export default function ClassSelect({
   onChange,
   currentClass = '',
   endpoint = '/principal/classes',
+  label = 'Class Name',
+  placeholder = 'Select class',
+  noun = 'class',
+  nounPlural = 'classes',
+  optional = false,
 }) {
   const [classes, setClasses] = useState([]);
   const [open, setOpen] = useState(false);
@@ -17,6 +22,8 @@ export default function ClassSelect({
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
   const wrapRef = useRef(null);
+
+  const Noun = noun.charAt(0).toUpperCase() + noun.slice(1);
 
   const load = useCallback(async () => {
     try {
@@ -49,7 +56,7 @@ export default function ClassSelect({
       onChange(res.data.classItem.name);
       setNewName('');
       setAdding(false);
-      toast.success('Class added successfully');
+      toast.success(`${Noun} added successfully`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not connect to the server');
     } finally {
@@ -62,7 +69,7 @@ export default function ClassSelect({
       await api.delete(`${endpoint}/${item.id}`);
       setClasses((prev) => prev.filter((c) => c.id !== item.id));
       if (value === item.name) onChange('');
-      toast.success('Class deleted successfully');
+      toast.success(`${Noun} deleted successfully`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not connect to the server');
     }
@@ -70,7 +77,7 @@ export default function ClassSelect({
 
   return (
     <div className="flex flex-col gap-1.5 text-sm text-slate-500">
-      <span>Class Name</span>
+      <span>{label}</span>
 
       <div className="flex items-stretch gap-2">
         <div ref={wrapRef} className="relative flex-1">
@@ -80,7 +87,7 @@ export default function ClassSelect({
             className={`${inputClass} flex w-full items-center justify-between gap-2 text-left`}
           >
             <span className={`truncate ${value ? 'text-slate-800' : 'text-slate-400'}`}>
-              {value || 'Select class'}
+              {value || placeholder}
             </span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -98,8 +105,23 @@ export default function ClassSelect({
 
           {open && (
             <ul className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+              {optional && (
+                <li className="px-3 py-1.5 hover:bg-slate-50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange('');
+                      setOpen(false);
+                    }}
+                    className="w-full py-1 text-left text-slate-500"
+                  >
+                    None
+                  </button>
+                </li>
+              )}
+
               {classes.length === 0 ? (
-                <li className="px-3 py-2 text-slate-400">No classes yet</li>
+                <li className="px-3 py-2 text-slate-400">No {nounPlural} yet</li>
               ) : (
                 classes.map((item) => {
                   const taken = item.assigned && item.name !== currentClass;
@@ -125,8 +147,8 @@ export default function ClassSelect({
                       <button
                         type="button"
                         onClick={() => removeClass(item)}
-                        title="Delete class"
-                        aria-label={`Delete class ${item.name}`}
+                        title={`Delete ${noun}`}
+                        aria-label={`Delete ${noun} ${item.name}`}
                         className="grid h-6 w-6 shrink-0 place-items-center rounded text-red-600 transition hover:bg-red-600 hover:text-white"
                       >
                         <svg
@@ -153,8 +175,8 @@ export default function ClassSelect({
         <button
           type="button"
           onClick={() => setAdding((a) => !a)}
-          title="Add class"
-          aria-label="Add class"
+          title={`Add ${noun}`}
+          aria-label={`Add ${noun}`}
           className="grid w-11 shrink-0 place-items-center rounded-md border border-slate-300 text-slate-600 transition hover:bg-blue-700 hover:text-white"
         >
           <svg
@@ -184,7 +206,7 @@ export default function ClassSelect({
                 addClass();
               }
             }}
-            placeholder="New class name"
+            placeholder={`New ${noun} name`}
             maxLength={30}
             className={`${inputClass} min-w-0 flex-1`}
           />

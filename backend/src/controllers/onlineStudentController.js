@@ -1,11 +1,14 @@
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import AttendanceRequest from '../models/AttendanceRequest.js';
 import OnlineClass from '../models/OnlineClass.js';
+import OnlineSemester from '../models/OnlineSemester.js';
 import User from '../models/User.js';
 
 const EMAIL_TAKEN = 'This email is already registered';
 const ROLL_TAKEN = 'This roll number is already taken in this class';
 const BAD_CLASS = 'The selected class does not exist';
+const BAD_SEMESTER = 'The selected semester does not exist';
 
 const publicStudent = (u) => ({
   id: u._id,
@@ -13,26 +16,41 @@ const publicStudent = (u) => ({
   email: u.email,
   rollNo: u.rollNo,
   className: u.className,
+  semester: u.semester || '',
   role: u.role,
   createdAt: u.createdAt,
 });
 
-// Class ka asli naam (capital/small letters ke farq ke baghair) dhoondta hai
+// Class ya semester ka asli naam (capital/small letters ke farq ke baghair) dhoondta hai
 const findClass = (name) =>
   OnlineClass.findOne({ name }).collation({ locale: 'en', strength: 2 }).select('name');
+
+const findSemester = (name) =>
+  OnlineSemester.findOne({ name }).collation({ locale: 'en', strength: 2 }).select('name');
 
 const duplicateMessage = (err) => (err.keyPattern?.rollNo ? ROLL_TAKEN : EMAIL_TAKEN);
 
 export const getOnlineStudents = async (req, res) => {
-  const students = await User.find({ role: 'student' }).sort({ createdAt: -1 });
+  const filter = { role: 'student' };
+  const { className } = req.query;
+  if (typeof className === 'string' && className.trim()) filter.className = className.trim();
+
+  const students = await User.find(filter).sort({ createdAt: -1 });
   res.json({ students: students.map(publicStudent) });
 };
 
 export const createOnlineStudent = async (req, res) => {
-  const { name, rollNo, className, email, password } = req.body;
+  const { name, rollNo, className, semester, email, password } = req.body;
 
   const cls = await findClass(className);
   if (!cls) return res.status(400).json({ message: BAD_CLASS });
+
+  let semesterName;
+  if (semester) {
+    const sem = await findSemester(semester);
+    if (!sem) return res.status(400).json({ message: BAD_SEMESTER });
+    semesterName = sem.name;
+  }
 
   const emailTaken = await User.findOne({ email });
   if (emailTaken) return res.status(409).json({ message: EMAIL_TAKEN });
@@ -49,6 +67,7 @@ export const createOnlineStudent = async (req, res) => {
       role: 'student',
       className: cls.name,
       rollNo,
+      ...(semesterName ? { semester: semesterName } : {}),
     });
     res.status(201).json({ student: publicStudent(student) });
   } catch (err) {
@@ -64,13 +83,23 @@ export const updateOnlineStudent = async (req, res) => {
   const student = await User.findOne({ _id: id, role: 'student' }).select('+password');
   if (!student) return res.status(404).json({ message: 'Student not found' });
 
-  const { name, rollNo, className, email, password } = req.body;
+  const { name, rollNo, className, semester, email, password } = req.body;
 
   let finalClass = student.className;
   if (className !== undefined && className !== student.className) {
     const cls = await findClass(className);
     if (!cls) return res.status(400).json({ message: BAD_CLASS });
     finalClass = cls.name;
+  }
+
+  if (semester !== undefined) {
+    if (semester === '') {
+      student.semester = undefined;
+    } else {
+      const sem = await findSemester(semester);
+      if (!sem) return res.status(400).json({ message: BAD_SEMESTER });
+      student.semester = sem.name;
+    }
   }
 
   if (email !== undefined && email !== student.email) {
@@ -110,6 +139,10 @@ export const deleteOnlineStudent = async (req, res) => {
 
   const student = await User.findOneAndDelete({ _id: id, role: 'student' });
   if (!student) return res.status(404).json({ message: 'Student not found' });
+
+  await AttendanceRequest.deleteMany({ student: student._id }).catch((err) =>
+    console.error('Request cleanup failed:', err.message)
+  );
 
   res.json({ message: 'Student deleted successfully' });
 };

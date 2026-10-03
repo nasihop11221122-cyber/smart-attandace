@@ -12,6 +12,7 @@ export default function UpdateOnlineStudentModal({ student, onClose, onUpdated }
     name: student.name,
     rollNo: student.rollNo || '',
     className: student.className || '',
+    semester: student.semester || '',
     email: student.email,
     password: '',
   });
@@ -30,6 +31,7 @@ export default function UpdateOnlineStudentModal({ student, onClose, onUpdated }
       name: form.name,
       rollNo: form.rollNo,
       className: form.className,
+      semester: form.semester,
       email: form.email,
     };
     if (form.password) payload.password = form.password;
@@ -79,6 +81,17 @@ export default function UpdateOnlineStudentModal({ student, onClose, onUpdated }
           endpoint="/admin/classes"
           value={form.className}
           onChange={(className) => setForm((f) => ({ ...f, className }))}
+        />
+
+        <ClassSelect
+          endpoint="/admin/semesters"
+          label="Semester (optional)"
+          placeholder="No semester"
+          noun="semester"
+          nounPlural="semesters"
+          optional
+          value={form.semester}
+          onChange={(semester) => setForm((f) => ({ ...f, semester }))}
         />
 
         <label className="flex flex-col gap-1.5 text-sm text-slate-500">

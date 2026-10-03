@@ -13,9 +13,10 @@ import Admin from './pages/Admin';
 import Teachers from './pages/Teachers';
 import Students from './pages/Students';
 import Profile from './pages/Profile';
-import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminHome from './pages/admin/AdminHome';
 import AdminStudents from './pages/admin/AdminStudents';
+import AdminClasses from './pages/admin/AdminClasses';
 import AdminProfile from './pages/admin/AdminProfile';
 import PrincipalDashboard from './pages/principal/PrincipalDashboard';
 import PrincipalHome from './pages/principal/PrincipalHome.jsx';
@@ -26,6 +27,9 @@ import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
 import TeacherStudents from './pages/teacher/TeacherStudents.jsx';
 import TeacherAttendance from './pages/teacher/TeacherAttendance.jsx';
 import TeacherProfile from './pages/teacher/TeacherProfile.jsx';
+import StudentDashboard from './pages/student/StudentDashboard';
+import StudentAttendance from './pages/student/StudentAttendance';
+import StudentProfile from './pages/student/StudentProfile';
 
 export default function App() {
   return (
@@ -51,8 +55,9 @@ export default function App() {
             path="/admin"
             element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>}
           >
-            <Route index element={<Navigate to="students" replace />} />
+            <Route index element={<AdminHome />} />
             <Route path="students" element={<AdminStudents />} />
+            <Route path="classes" element={<AdminClasses />} />
             <Route path="profile" element={<AdminProfile />} />
           </Route>
           <Route
@@ -76,7 +81,10 @@ export default function App() {
           <Route
             path="/student"
             element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
-          />
+          >
+            <Route index element={<StudentAttendance />} />
+            <Route path="profile" element={<StudentProfile />} />
+          </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
         <ToastContainer position="top-right" autoClose={3000} />

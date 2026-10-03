@@ -82,6 +82,12 @@ export default function AdminStudents() {
                       <span className="text-slate-500">Class</span>
                       <span className="truncate font-medium text-slate-800">{s.className}</span>
                     </p>
+                    {s.semester && (
+                      <p className="flex justify-between gap-3">
+                        <span className="text-slate-500">Semester</span>
+                        <span className="truncate font-medium text-slate-800">{s.semester}</span>
+                      </p>
+                    )}
                     <p className="flex justify-between gap-3">
                       <span className="text-slate-500">Email</span>
                       <span className="truncate font-medium text-slate-800">{s.email}</span>

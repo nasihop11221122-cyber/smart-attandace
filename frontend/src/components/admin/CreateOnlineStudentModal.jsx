@@ -12,6 +12,7 @@ export default function CreateOnlineStudentModal({ onClose, onCreated }) {
     name: '',
     rollNo: '',
     className: '',
+    semester: '',
     email: '',
     password: '',
   });
@@ -72,6 +73,17 @@ export default function CreateOnlineStudentModal({ onClose, onCreated }) {
           endpoint="/admin/classes"
           value={form.className}
           onChange={(className) => setForm((f) => ({ ...f, className }))}
+        />
+
+        <ClassSelect
+          endpoint="/admin/semesters"
+          label="Semester (optional)"
+          placeholder="No semester"
+          noun="semester"
+          nounPlural="semesters"
+          optional
+          value={form.semester}
+          onChange={(semester) => setForm((f) => ({ ...f, semester }))}
         />
 
         <label className="flex flex-col gap-1.5 text-sm text-slate-500">

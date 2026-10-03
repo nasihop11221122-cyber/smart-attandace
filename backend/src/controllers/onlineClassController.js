@@ -5,10 +5,19 @@ import User from '../models/User.js';
 const publicClass = (c) => ({ id: c._id, name: c.name });
 
 export const getOnlineClasses = async (req, res) => {
-  const classes = await OnlineClass.find()
-    .sort({ name: 1 })
-    .collation({ locale: 'en', numericOrdering: true });
-  res.json({ classes: classes.map(publicClass) });
+  const [classes, counts] = await Promise.all([
+    OnlineClass.find().sort({ name: 1 }).collation({ locale: 'en', numericOrdering: true }),
+    User.aggregate([
+      { $match: { role: 'student', className: { $type: 'string' } } },
+      { $group: { _id: '$className', count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const countMap = new Map(counts.map((c) => [c._id, c.count]));
+
+  res.json({
+    classes: classes.map((c) => ({ ...publicClass(c), studentCount: countMap.get(c.name) || 0 })),
+  });
 };
 
 export const createOnlineClass = async (req, res) => {
