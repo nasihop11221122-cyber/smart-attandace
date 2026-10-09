@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import PasswordInput from '../PasswordInput';
-import ClassSelect from '../principle/ClassSelect';
+import ClassSelectBox from './ClassSelectBox';
 
 const inputClass =
   'rounded-md border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-800 outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/20';
@@ -11,8 +11,7 @@ export default function UpdateOnlineStudentModal({ student, onClose, onUpdated }
   const [form, setForm] = useState({
     name: student.name,
     rollNo: student.rollNo || '',
-    className: student.className || '',
-    semester: student.semester || '',
+    classId: student.classId || '',
     email: student.email,
     password: '',
   });
@@ -22,7 +21,7 @@ export default function UpdateOnlineStudentModal({ student, onClose, onUpdated }
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!form.className) {
+    if (!form.classId) {
       toast.error('Please select a class');
       return;
     }
@@ -30,8 +29,7 @@ export default function UpdateOnlineStudentModal({ student, onClose, onUpdated }
     const payload = {
       name: form.name,
       rollNo: form.rollNo,
-      className: form.className,
-      semester: form.semester,
+      classId: form.classId,
       email: form.email,
     };
     if (form.password) payload.password = form.password;
@@ -77,21 +75,9 @@ export default function UpdateOnlineStudentModal({ student, onClose, onUpdated }
           />
         </label>
 
-        <ClassSelect
-          endpoint="/admin/classes"
-          value={form.className}
-          onChange={(className) => setForm((f) => ({ ...f, className }))}
-        />
-
-        <ClassSelect
-          endpoint="/admin/semesters"
-          label="Semester (optional)"
-          placeholder="No semester"
-          noun="semester"
-          nounPlural="semesters"
-          optional
-          value={form.semester}
-          onChange={(semester) => setForm((f) => ({ ...f, semester }))}
+        <ClassSelectBox
+          value={form.classId}
+          onChange={(classId) => setForm((f) => ({ ...f, classId }))}
         />
 
         <label className="flex flex-col gap-1.5 text-sm text-slate-500">

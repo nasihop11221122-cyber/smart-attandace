@@ -207,7 +207,7 @@ export default function PrincipalHome() {
         ) : (
           <ul className="mt-4 max-h-80 divide-y divide-slate-100 overflow-y-auto">
             {notifications.map((n) => (
-              <li key={n.id} className="flex items-start gap-3 py-3">
+              <li key={n.id} className="flex flex-col sm:flex-row sm:items-start gap-3 py-3">
                 <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-green-50 text-green-600">
                   <Svg className="h-4 w-4">
                     <polyline points="20 6 9 17 4 12" />
@@ -230,7 +230,7 @@ export default function PrincipalHome() {
                 <button
                   onClick={() => setUnlocking(n)}
                   title="Unlock attendance"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
+                  className="inline-flex shrink-0 w-full sm:w-auto items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100"
                 >
                   <Svg className="h-3.5 w-3.5">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />

@@ -78,14 +78,21 @@ export default function AdminStudents() {
                       <span className="text-slate-500">Roll No</span>
                       <span className="font-medium text-slate-800">{s.rollNo}</span>
                     </p>
-                    <p className="flex justify-between gap-3">
-                      <span className="text-slate-500">Class</span>
-                      <span className="truncate font-medium text-slate-800">{s.className}</span>
-                    </p>
-                    {s.semester && (
+                    {s.program ? (
+                      <>
+                        <p className="flex justify-between gap-3">
+                          <span className="text-slate-500">Program</span>
+                          <span className="truncate font-medium text-slate-800">{s.program}</span>
+                        </p>
+                        <p className="flex justify-between gap-3">
+                          <span className="text-slate-500">Semester</span>
+                          <span className="truncate font-medium text-slate-800">{s.semester}</span>
+                        </p>
+                      </>
+                    ) : (
                       <p className="flex justify-between gap-3">
-                        <span className="text-slate-500">Semester</span>
-                        <span className="truncate font-medium text-slate-800">{s.semester}</span>
+                        <span className="text-slate-500">Class</span>
+                        <span className="truncate font-medium text-slate-800">{s.className}</span>
                       </p>
                     )}
                     <p className="flex justify-between gap-3">

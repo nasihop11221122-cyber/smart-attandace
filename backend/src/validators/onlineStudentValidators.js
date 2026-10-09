@@ -14,15 +14,13 @@ const rollNo = z
   .trim()
   .min(1, 'Roll number is required')
   .max(30, 'Roll number must not be more than 30 characters');
-const className = z.string().trim().min(1, 'Class is required').max(60);
-const semester = z.string().trim().max(30, 'Semester must not be more than 30 characters').optional();
+const classId = z.string().regex(/^[a-fA-F0-9]{24}$/, 'Please select a class');
 const email = z.string().trim().toLowerCase().email('Please enter a valid email');
 
 export const onlineStudentSchema = z.object({
   name: fullName,
   rollNo,
-  className,
-  semester,
+  classId,
   email,
   password,
 });
@@ -30,8 +28,7 @@ export const onlineStudentSchema = z.object({
 export const onlineStudentUpdateSchema = z.object({
   name: fullName,
   rollNo,
-  className,
-  semester,
+  classId,
   email,
   password: password.optional(),
 });

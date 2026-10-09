@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import {
-  getOnlineClasses,
-  createOnlineClass,
-  deleteOnlineClass,
-} from '../controllers/onlineClassController.js';
+  getCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+} from '../controllers/courseController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { classSchema } from '../validators/classValidators.js';
+import { createCourseSchema, updateCourseSchema } from '../validators/courseValidators.js';
 
 const router = Router();
 
@@ -22,8 +23,9 @@ const onlyAdmin = (req, res, next) => {
 
 router.use(protect, onlyAdmin);
 
-router.get('/', wrap(getOnlineClasses));
-router.post('/', validate(classSchema), wrap(createOnlineClass));
-router.delete('/:id', wrap(deleteOnlineClass));
+router.get('/', wrap(getCourses));
+router.post('/', validate(createCourseSchema), wrap(createCourse));
+router.patch('/:id', validate(updateCourseSchema), wrap(updateCourse));
+router.delete('/:id', wrap(deleteCourse));
 
 export default router;

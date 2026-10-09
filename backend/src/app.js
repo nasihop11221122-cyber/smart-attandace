@@ -13,12 +13,14 @@ import attendanceRoutes from './routes/attendanceRoutes.js';
 import historyRoutes from './routes/historyRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import superAdminViewRoutes from './routes/superAdminViewRoutes.js';
-import onlineClassRoutes from './routes/onlineClassRoutes.js';
-import onlineSemesterRoutes from './routes/onlineSemesterRoutes.js';
+import programClassRoutes from './routes/programClassRoutes.js';
+import courseRoutes from './routes/courseRoutes.js';
+import holidayRoutes from './routes/holidayRoutes.js';
 import onlineStudentRoutes from './routes/onlineStudentRoutes.js';
 import onlineRequestRoutes from './routes/onlineRequestRoutes.js';
 import studentRequestRoutes from './routes/studentRequestRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
+
 
 const app = express();
 
@@ -53,12 +55,12 @@ app.use('/api/principal/dashboard', dashboardRoutes);
 app.use('/api/teacher/students', studentRoutes);
 app.use('/api/teacher/attendance', attendanceRoutes);
 app.use('/api/super-admin', superAdminViewRoutes);
-app.use('/api/admin/classes', onlineClassRoutes);
-app.use('/api/admin/semesters', onlineSemesterRoutes);
+app.use('/api/admin/classes', programClassRoutes);
+app.use('/api/admin/courses', courseRoutes);
 app.use('/api/admin/students', onlineStudentRoutes);
 app.use('/api/admin/requests', onlineRequestRoutes);
 app.use('/api/student/attendance', studentRequestRoutes);
-
+app.use('/api/admin/holidays', holidayRoutes);
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // eslint-disable-next-line no-unused-vars
@@ -67,5 +69,6 @@ app.use((err, req, res, next) => {
   const cors403 = err.message === 'Not allowed by CORS';
   res.status(cors403 ? 403 : 500).json({ message: cors403 ? 'CORS blocked' : 'Server error' });
 });
+
 
 export default app;

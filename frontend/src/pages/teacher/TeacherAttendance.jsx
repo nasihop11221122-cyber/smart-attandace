@@ -360,7 +360,7 @@ export default function TeacherAttendance() {
                   </span>
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
                   <div className="rounded-md bg-green-50 py-1.5">
                     <p className="text-base font-semibold text-green-700">{s.counts.present}</p>
                     <p className="text-slate-500">Present</p>
@@ -375,7 +375,7 @@ export default function TeacherAttendance() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                   {STATUSES.map((st) => (
                     <button
                       key={st.key}

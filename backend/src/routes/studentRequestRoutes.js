@@ -1,6 +1,13 @@
 import { Router } from 'express';
-import { getMyRequest, createMyRequest } from '../controllers/onlineRequestController.js';
+import {
+  getMyRequest,
+  createMyRequest,
+  requestDeviceChange,
+} from '../controllers/onlineRequestController.js';
 import { protect } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { studentRequestSchema } from '../validators/locationValidators.js';
+import { deviceChangeSchema } from '../validators/deviceValidators.js';
 
 const router = Router();
 
@@ -17,6 +24,7 @@ const onlyStudent = (req, res, next) => {
 router.use(protect, onlyStudent);
 
 router.get('/', wrap(getMyRequest));
-router.post('/', wrap(createMyRequest));
+router.post('/', validate(studentRequestSchema), wrap(createMyRequest));
+router.post('/device-change', validate(deviceChangeSchema), wrap(requestDeviceChange));
 
 export default router;

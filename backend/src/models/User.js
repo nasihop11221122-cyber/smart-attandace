@@ -7,9 +7,15 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, select: false },
     // Abhi register hone wala har user super_admin hai (aapki requirement). Baad me isay change kar lena.
     role: { type: String, enum: ['super_admin', 'admin', 'principal', 'teacher', 'student', 'user'], default: 'super_admin' },
-    className: { type: String, trim: true, maxlength: 60 },
-    semester: { type: String, trim: true, maxlength: 30 },
+    className: { type: String, trim: true, maxlength: 100 },
+    classId: { type: mongoose.Schema.Types.ObjectId, ref: 'ProgramClass' },
     rollNo: { type: String, trim: true, maxlength: 30 },
+    // Online system: student ka registered phone (browser ki random id)
+    deviceId: { type: String, trim: true, maxlength: 64 },
+    deviceBoundAt: { type: Date },
+    // Naye phone ki request jo admin ki manzoori ka intezar kar rahi hai
+    pendingDeviceId: { type: String, trim: true, maxlength: 64 },
+    pendingDeviceAt: { type: Date },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpires: { type: Date, select: false },
   },

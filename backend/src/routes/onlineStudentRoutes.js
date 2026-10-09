@@ -4,6 +4,9 @@ import {
   createOnlineStudent,
   updateOnlineStudent,
   deleteOnlineStudent,
+  getDeviceChanges,
+  decideDeviceChange,
+  getStudentAttendance,
 } from '../controllers/onlineStudentController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -11,6 +14,7 @@ import {
   onlineStudentSchema,
   onlineStudentUpdateSchema,
 } from '../validators/onlineStudentValidators.js';
+import { deviceChangeDecisionSchema } from '../validators/deviceValidators.js';
 
 const router = Router();
 
@@ -28,6 +32,14 @@ router.use(protect, onlyAdmin);
 
 router.get('/', wrap(getOnlineStudents));
 router.post('/', validate(onlineStudentSchema), wrap(createOnlineStudent));
+
+// Phone change requests (these paths are before '/:id' on purpose)
+router.get('/device-changes', wrap(getDeviceChanges));
+router.patch('/device-changes/:id', validate(deviceChangeDecisionSchema), wrap(decideDeviceChange));
+
+// Attendance of one student
+router.get('/:id/attendance', wrap(getStudentAttendance));
+
 router.patch('/:id', validate(onlineStudentUpdateSchema), wrap(updateOnlineStudent));
 router.delete('/:id', wrap(deleteOnlineStudent));
 

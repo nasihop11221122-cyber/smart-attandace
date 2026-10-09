@@ -1,12 +1,8 @@
 import { Router } from 'express';
-import {
-  getOnlineSemesters,
-  createOnlineSemester,
-  deleteOnlineSemester,
-} from '../controllers/onlineSemesterController.js';
+import { getHolidays, createHoliday, deleteHoliday } from '../controllers/holidayController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { semesterSchema } from '../validators/semesterValidators.js';
+import { createHolidaySchema } from '../validators/holidayValidators.js';
 
 const router = Router();
 
@@ -22,8 +18,8 @@ const onlyAdmin = (req, res, next) => {
 
 router.use(protect, onlyAdmin);
 
-router.get('/', wrap(getOnlineSemesters));
-router.post('/', validate(semesterSchema), wrap(createOnlineSemester));
-router.delete('/:id', wrap(deleteOnlineSemester));
+router.get('/', wrap(getHolidays));
+router.post('/', validate(createHolidaySchema), wrap(createHoliday));
+router.delete('/:id', wrap(deleteHoliday));
 
 export default router;

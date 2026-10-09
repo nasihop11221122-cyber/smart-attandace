@@ -13,12 +13,62 @@ const formatDate = (value) =>
 const formatTime = (value) =>
   new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+const FLAG_TEXT = {
+  no_location: 'The student did not send a location',
+  class_location_not_set: 'This class has no saved location',
+  stale_location: 'The location reading was old',
+  low_accuracy: 'The GPS accuracy was poor',
+  zero_accuracy: 'The GPS accuracy looks fake',
+  rounded_coordinates: 'The coordinates look rounded',
+  duplicate_coordinates: 'The same exact point was sent by other students',
+  near_boundary: 'The student is close to the edge of the class area',
+};
+
+const VERDICT = {
+  inside: {
+    label: 'Inside the class area',
+    box: 'border-green-200 bg-green-50 text-green-800',
+  },
+  outside: {
+    label: 'Outside the class area',
+    box: 'border-red-200 bg-red-50 text-red-800',
+  },
+  uncertain: {
+    label: 'Location could not be verified',
+    box: 'border-amber-200 bg-amber-50 text-amber-800',
+  },
+};
+
 function Row({ label, value }) {
   return (
     <p className="flex justify-between gap-3">
       <span className="text-slate-500">{label}</span>
       <span className="truncate font-medium text-slate-800">{value}</span>
     </p>
+  );
+}
+
+function LocationCheck({ check }) {
+  if (!check) return null;
+  const style = VERDICT[check.verdict] || VERDICT.uncertain;
+
+  return (
+    <div className={`rounded-lg border p-3 text-sm ${style.box}`}>
+      <p className="font-semibold">{style.label}</p>
+      {check.distance !== null && (
+        <p className="mt-0.5 text-xs">
+          {check.distance} m from the class point
+          {check.accuracy !== null && ` · GPS accuracy ±${check.accuracy} m`}
+        </p>
+      )}
+      {check.flags.length > 0 && (
+        <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-xs">
+          {check.flags.map((f) => (
+            <li key={f}>{FLAG_TEXT[f] || f}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -45,7 +95,7 @@ export default function RequestDecisionModal({ request, onClose, onDecided }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/50 p-4">
       <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl bg-white p-6">
         <div>
           <h3 className="text-xl font-semibold text-slate-800">Attendance Request</h3>
@@ -57,9 +107,12 @@ export default function RequestDecisionModal({ request, onClose, onDecided }) {
           {request.rollNo && <Row label="Roll No" value={request.rollNo} />}
           <Row label="Class" value={request.className} />
           {request.semester && <Row label="Semester" value={request.semester} />}
+         {request.courseName && <Row label="Course" value={request.courseName} />}
           <Row label="Date" value={formatDate(request.date)} />
           <Row label="Sent at" value={formatTime(request.time)} />
         </div>
+
+        <LocationCheck check={request.locationCheck} />
 
         <div className="flex flex-wrap justify-end gap-2">
           <button

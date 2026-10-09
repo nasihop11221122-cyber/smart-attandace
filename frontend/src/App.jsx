@@ -30,6 +30,7 @@ import TeacherProfile from './pages/teacher/TeacherProfile.jsx';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentAttendance from './pages/student/StudentAttendance';
 import StudentProfile from './pages/student/StudentProfile';
+import AdminHolidays from './pages/admin/AdminHolidays';
 
 export default function App() {
   return (
@@ -58,6 +59,7 @@ export default function App() {
             <Route index element={<AdminHome />} />
             <Route path="students" element={<AdminStudents />} />
             <Route path="classes" element={<AdminClasses />} />
+            <Route path="holidays" element={<AdminHolidays />} />
             <Route path="profile" element={<AdminProfile />} />
           </Route>
           <Route
