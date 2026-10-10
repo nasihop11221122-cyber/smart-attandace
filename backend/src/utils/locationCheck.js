@@ -1,5 +1,8 @@
 const EARTH_RADIUS_M = 6371000;
 
+// Every class circle has this radius (in meters). It is fixed here, the admin cannot change it.
+export const CLASS_RADIUS_M = 200;
+
 export const LIMITS = {
   maxAccuracyM: 100, // worse than this: the reading is not trusted
   maxAgeMs: 2 * 60 * 1000, // reading must be taken within the last 2 minutes
@@ -58,7 +61,7 @@ export const evaluateLocation = ({ classLocation, reading, now = Date.now(), sam
 
   // Layer: the circle decision
   const distance = distanceMeters(classLocation, reading);
-  const radius = classLocation.radius;
+  const radius = CLASS_RADIUS_M;
   const accuracy = reading.accuracy > 0 ? reading.accuracy : 0;
 
   let verdict;

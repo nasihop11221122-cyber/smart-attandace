@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
 
@@ -24,7 +24,7 @@ const NOTE_TEXT = {
   old_daily: 'This attendance was saved before the courses were added.',
 };
 
-function DateList({ title, dates, chip }) {
+function DateList({ title, dates, chip, onPick }) {
   return (
     <div>
       <p className="text-sm font-medium text-slate-700">
@@ -34,11 +34,22 @@ function DateList({ title, dates, chip }) {
         <p className="mt-1.5 text-sm text-slate-400">None</p>
       ) : (
         <div className="mt-1.5 flex max-h-44 flex-wrap gap-1.5 overflow-y-auto pr-1">
-          {dates.map((d) => (
-            <span key={d} className={`rounded-md px-2 py-1 text-xs font-medium ${chip}`}>
-              {formatDate(d)}
-            </span>
-          ))}
+          {dates.map((d) =>
+            onPick ? (
+              <button
+                key={d}
+                type="button"
+                onClick={() => onPick(d)}
+                className={`rounded-md px-2 py-1 text-xs font-medium transition hover:ring-2 hover:ring-slate-300 ${chip}`}
+              >
+                {formatDate(d)}
+              </button>
+            ) : (
+              <span key={d} className={`rounded-md px-2 py-1 text-xs font-medium ${chip}`}>
+                {formatDate(d)}
+              </span>
+            )
+          )}
         </div>
       )}
     </div>
@@ -49,28 +60,54 @@ export default function StudentAttendanceModal({ student, onClose }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const res = await api.get(`/admin/students/${student.id}/attendance`);
-        if (active) setData(res.data);
-      } catch (err) {
-        const message = err.response?.data?.message || 'Could not connect to the server';
-        if (active) setError(message);
-        toast.error(message);
-      }
-    };
-
-    load();
-    return () => {
-      active = false;
-    };
-  }, [student.id]);
+  const [marking, setMarking] = useState(null); // the absent date the admin picked
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const course = data?.courses[selected] || null;
+
+  const load = useCallback(async () => {
+    try {
+      const res = await api.get(`/admin/students/${student.id}/attendance`);
+      setData(res.data);
+    } catch (err) {
+      const message = err.response?.data?.message || 'Could not connect to the server';
+      setError(message);
+      toast.error(message);
+    }
+  }, [student.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const pickDate = (date) => {
+    setMarking(date);
+    setReason('');
+  };
+
+  const markPresent = async () => {
+    setBusy(true);
+    try {
+      const res = await api.post(`/admin/students/${student.id}/attendance`, {
+        courseId: course.id,
+        date: marking,
+        reason,
+      });
+      toast.success(res.data.message);
+      setMarking(null);
+      await load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not connect to the server');
+      // The date may have changed in the meantime, so show the latest list
+      if (err.response?.status === 409) {
+        setMarking(null);
+        await load();
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/50 p-4">
@@ -116,7 +153,10 @@ export default function StudentAttendanceModal({ student, onClose }) {
               {data.courses.map((c, i) => (
                 <button
                   key={c.id}
-                  onClick={() => setSelected(i)}
+                  onClick={() => {
+                    setSelected(i);
+                    setMarking(null);
+                  }}
                   className={`shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium transition ${
                     i === selected
                       ? 'border-blue-700 bg-blue-700 text-white'
@@ -158,7 +198,48 @@ export default function StudentAttendanceModal({ student, onClose }) {
             </div>
 
             <DateList title="Present dates" dates={course.present} chip="bg-green-50 text-green-800" />
-            <DateList title="Absent dates" dates={course.absent} chip="bg-red-50 text-red-800" />
+            <DateList
+              title="Absent dates"
+              dates={course.absent}
+              chip="bg-red-50 text-red-800"
+              onPick={course.note ? undefined : pickDate}
+            />
+            {!course.note && course.absent.length > 0 && !marking && (
+              <p className="-mt-2 text-xs text-slate-400">Tap an absent date to mark it Present.</p>
+            )}
+
+            {marking && (
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-medium text-slate-800">
+                  Mark Present: {formatDate(marking)}
+                </p>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  rows={2}
+                  maxLength={200}
+                  placeholder="Reason (optional)"
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/20"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMarking(null)}
+                    className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={markPresent}
+                    disabled={busy}
+                    className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {busy ? 'Please wait…' : 'Mark Present'}
+                  </button>
+                </div>
+              </div>
+            )}
             {course.pending.length > 0 && (
               <DateList
                 title="Pending dates"

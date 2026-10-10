@@ -29,8 +29,10 @@ import TeacherAttendance from './pages/teacher/TeacherAttendance.jsx';
 import TeacherProfile from './pages/teacher/TeacherProfile.jsx';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentAttendance from './pages/student/StudentAttendance';
+import StudentHistory from './pages/student/StudentHistory';
 import StudentProfile from './pages/student/StudentProfile';
 import AdminHolidays from './pages/admin/AdminHolidays';
+import AdminHistory from './pages/admin/AdminHistory';
 
 export default function App() {
   return (
@@ -60,6 +62,7 @@ export default function App() {
             <Route path="students" element={<AdminStudents />} />
             <Route path="classes" element={<AdminClasses />} />
             <Route path="holidays" element={<AdminHolidays />} />
+            <Route path="history" element={<AdminHistory />} />
             <Route path="profile" element={<AdminProfile />} />
           </Route>
           <Route
@@ -85,6 +88,7 @@ export default function App() {
             element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
           >
             <Route index element={<StudentAttendance />} />
+            <Route path="history" element={<StudentHistory />} />
             <Route path="profile" element={<StudentProfile />} />
           </Route>
           <Route path="*" element={<Navigate to="/login" replace />} />

@@ -184,6 +184,16 @@ const notRegistered = (res) =>
     code: 'device_mismatch',
   });
 
+const deviceInUse = (res) =>
+  res.status(403).json({
+    message: 'This phone is already used by another student',
+    code: 'device_in_use',
+  });
+
+// Is this phone already saved for a different student?
+const usedByAnotherStudent = (deviceId, userId) =>
+  User.exists({ _id: { $ne: userId }, role: 'student', deviceId });
+
 // Saves the phone only if the student has none yet (safe when two requests come together)
 const bindDevice = async (userId, deviceId) => {
   const updated = await User.findOneAndUpdate(
@@ -208,7 +218,11 @@ export const createMyRequest = async (req, res) => {
   // Only the saved phone of the student can send attendance
   const { deviceId } = req.body;
   if (me.deviceId && me.deviceId !== deviceId) return notRegistered(res);
-    if (await Holiday.exists({ date })) {
+
+  // A phone that belongs to another student cannot be used by this student
+  if (!me.deviceId && (await usedByAnotherStudent(deviceId, me._id))) return deviceInUse(res);
+
+  if (await Holiday.exists({ date })) {
     return res.status(400).json({ message: 'Today is a holiday' });
   }
 
@@ -244,6 +258,8 @@ export const createMyRequest = async (req, res) => {
     existing.status = status;
     existing.decidedBy = undefined;
     existing.decidedAt = decidedAt;
+    existing.markedByAdmin = false; // an earlier change by the admin no longer applies
+    existing.adminNote = undefined;
     existing.locationReading = locationFields.locationReading;
     existing.locationCheck = locationFields.locationCheck;
     await existing.save();
@@ -289,6 +305,7 @@ export const requestDeviceChange = async (req, res) => {
   if (me.pendingDeviceId === deviceId) {
     return res.status(409).json({ message: 'Your phone change request is already sent' });
   }
+  if (await usedByAnotherStudent(deviceId, me._id)) return deviceInUse(res);
 
   me.pendingDeviceId = deviceId;
   me.pendingDeviceAt = new Date();

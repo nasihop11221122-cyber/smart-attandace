@@ -20,7 +20,7 @@ import onlineStudentRoutes from './routes/onlineStudentRoutes.js';
 import onlineRequestRoutes from './routes/onlineRequestRoutes.js';
 import studentRequestRoutes from './routes/studentRequestRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
-
+import attendanceHistoryRoutes from './routes/attendanceHistoryRoutes.js';
 
 const app = express();
 
@@ -61,6 +61,7 @@ app.use('/api/admin/students', onlineStudentRoutes);
 app.use('/api/admin/requests', onlineRequestRoutes);
 app.use('/api/student/attendance', studentRequestRoutes);
 app.use('/api/admin/holidays', holidayRoutes);
+app.use('/api/admin/history', attendanceHistoryRoutes);
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // eslint-disable-next-line no-unused-vars

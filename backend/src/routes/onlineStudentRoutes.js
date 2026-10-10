@@ -8,6 +8,7 @@ import {
   decideDeviceChange,
   getStudentAttendance,
 } from '../controllers/onlineStudentController.js';
+import { markStudentPresent } from '../controllers/attendanceCorrectionController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
@@ -15,6 +16,7 @@ import {
   onlineStudentUpdateSchema,
 } from '../validators/onlineStudentValidators.js';
 import { deviceChangeDecisionSchema } from '../validators/deviceValidators.js';
+import { markPresentSchema } from '../validators/correctionValidators.js';
 
 const router = Router();
 
@@ -39,6 +41,7 @@ router.patch('/device-changes/:id', validate(deviceChangeDecisionSchema), wrap(d
 
 // Attendance of one student
 router.get('/:id/attendance', wrap(getStudentAttendance));
+router.post('/:id/attendance', validate(markPresentSchema), wrap(markStudentPresent));
 
 router.patch('/:id', validate(onlineStudentUpdateSchema), wrap(updateOnlineStudent));
 router.delete('/:id', wrap(deleteOnlineStudent));

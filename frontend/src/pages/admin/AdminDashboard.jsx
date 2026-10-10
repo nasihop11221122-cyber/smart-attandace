@@ -5,8 +5,8 @@ const links = [
   { to: '/admin/students', label: 'Students' },
   { to: '/admin/classes', label: 'Classes' },
   { to: '/admin/holidays', label: 'Holidays' },
+  { to: '/admin/history', label: 'History' },
   { to: '/admin/profile', label: 'Profile' },
-  
 ];
 
 export default function AdminDashboard() {

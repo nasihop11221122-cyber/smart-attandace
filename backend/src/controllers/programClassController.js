@@ -3,13 +3,13 @@ import AttendanceRequest from '../models/AttendanceRequest.js';
 import Course from '../models/Course.js';
 import ProgramClass, { classLabel } from '../models/ProgramClass.js';
 import User from '../models/User.js';
-import { hasClassLocation } from '../utils/locationCheck.js';
+import { hasClassLocation, CLASS_RADIUS_M } from '../utils/locationCheck.js';
 
 const CASE_INSENSITIVE = { locale: 'en', strength: 2 };
 
 const publicLocation = (loc) =>
   hasClassLocation(loc)
-    ? { latitude: loc.latitude, longitude: loc.longitude, radius: loc.radius }
+    ? { latitude: loc.latitude, longitude: loc.longitude, radius: CLASS_RADIUS_M }
     : null;
 
 const publicClass = (c, studentCount = 0, courseCount = 0) => ({

@@ -4,6 +4,7 @@ import {
   createMyRequest,
   requestDeviceChange,
 } from '../controllers/onlineRequestController.js';
+import { getMyAttendanceReport } from '../controllers/studentReportController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { studentRequestSchema } from '../validators/locationValidators.js';
@@ -24,6 +25,7 @@ const onlyStudent = (req, res, next) => {
 router.use(protect, onlyStudent);
 
 router.get('/', wrap(getMyRequest));
+router.get('/report', wrap(getMyAttendanceReport));
 router.post('/', validate(studentRequestSchema), wrap(createMyRequest));
 router.post('/device-change', validate(deviceChangeSchema), wrap(requestDeviceChange));
 

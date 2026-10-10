@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { getCurrentLocation } from '../../utils/getLocation';
 
-const inputClass =
-  'rounded-md border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-800 outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/20';
+// Same value as CLASS_RADIUS_M on the server. The server decides, this is only for the text.
+const CLASS_RADIUS_M = 200;
 
 // Only the fields the server needs (accuracy is for display only)
 export const locationPayload = (loc) => ({
   latitude: loc.latitude,
   longitude: loc.longitude,
-  radius: Number(loc.radius),
 });
 
 export default function LocationField({ value, onChange }) {
@@ -23,7 +22,6 @@ export default function LocationField({ value, onChange }) {
         latitude: reading.latitude,
         longitude: reading.longitude,
         accuracy: reading.accuracy,
-        radius: value?.radius ?? 100,
       });
     } catch (err) {
       toast.error(err.message);
@@ -31,8 +29,6 @@ export default function LocationField({ value, onChange }) {
       setBusy(false);
     }
   };
-
-  const onRadius = (e) => onChange({ ...value, radius: e.target.value });
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -59,18 +55,9 @@ export default function LocationField({ value, onChange }) {
               The accuracy is low. Move near a window or outside and press the button again.
             </p>
           )}
-          <label className="flex flex-col gap-1.5 text-sm text-slate-500">
-            Radius in meters (50 to 1000)
-            <input
-              type="number"
-              min={50}
-              max={1000}
-              step={10}
-              value={value.radius}
-              onChange={onRadius}
-              className={inputClass}
-            />
-          </label>
+          <p className="text-xs text-slate-500">
+            Students must be within {CLASS_RADIUS_M} meters of this point.
+          </p>
         </>
       ) : (
         <p className="text-xs text-slate-500">

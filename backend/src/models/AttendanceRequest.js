@@ -13,6 +13,9 @@ const attendanceRequestSchema = new mongoose.Schema(
     status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
     decidedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     decidedAt: { type: Date },
+    // Set when an admin changed the status by hand (or added the record by hand)
+    markedByAdmin: { type: Boolean, default: false },
+    adminNote: { type: String, trim: true },
 
     // Raw GPS reading sent by the student's browser
     locationReading: {

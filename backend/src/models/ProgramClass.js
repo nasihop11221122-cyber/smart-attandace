@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 
-// GPS circle of the class: students must be inside it to be marked present
+// Centre of the class circle: students must be inside it to be marked present
+// (the radius is fixed in utils/locationCheck.js)
 const locationSchema = new mongoose.Schema(
   {
     latitude: { type: Number, required: true, min: -90, max: 90 },
     longitude: { type: Number, required: true, min: -180, max: 180 },
-    radius: { type: Number, required: true, min: 50, max: 1000, default: 100 },
   },
   { _id: false }
 );
