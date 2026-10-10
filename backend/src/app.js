@@ -64,7 +64,7 @@ app.use('/api/admin/holidays', holidayRoutes);
 app.use('/api/admin/history', attendanceHistoryRoutes);
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-varsa
 app.use((err, req, res, next) => {
   console.error(err.message);
   const cors403 = err.message === 'Not allowed by CORS';
