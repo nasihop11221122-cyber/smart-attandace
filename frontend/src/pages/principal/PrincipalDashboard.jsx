@@ -3,6 +3,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 const links = [
   { to: '/principal', label: 'Overview', end: true },
   { to: '/principal/teacher', label: 'Teacher' },
+  { to: '/principal/holidays', label: 'Holidays' },
   { to: '/principal/history', label: 'History' },
   { to: '/principal/profile', label: 'Profile' },
 ];

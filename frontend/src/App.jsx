@@ -21,6 +21,7 @@ import AdminProfile from './pages/admin/AdminProfile';
 import PrincipalDashboard from './pages/principal/PrincipalDashboard';
 import PrincipalHome from './pages/principal/PrincipalHome.jsx';
 import PrincipalTeacher from './pages/principal/PrincipalTeacher.jsx';
+import PrincipalHolidays from './pages/principal/PrincipalHolidays';
 import PrincipalHistory from './pages/principal/PrincipalHistory.jsx';
 import PrincipalProfile from './pages/principal/PrincipalProfile.jsx';
 import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
@@ -72,6 +73,7 @@ export default function App() {
             <Route index element={<PrincipalHome />} />
             <Route path="teacher" element={<PrincipalTeacher />} />
             <Route path="history" element={<PrincipalHistory />} />
+            <Route path="holidays" element={<PrincipalHolidays />} />
             <Route path="profile" element={<PrincipalProfile />} />
           </Route>
           <Route

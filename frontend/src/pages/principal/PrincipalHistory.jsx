@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import ClassStudentsView from '../../components/ClassStudentsView';
+import DownloadHistoryMenu from '../../components/principle/DownloadHistoryMenu';
 
 export default function PrincipalHistory() {
   const [classes, setClasses] = useState([]);
@@ -39,7 +40,12 @@ export default function PrincipalHistory() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-slate-800">History</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-2xl font-semibold text-slate-800">History</h2>
+        <div className="ml-auto">
+          <DownloadHistoryMenu />
+        </div>
+      </div>
 
       {loading ? (
         <p className="mt-6 text-slate-500">Loading…</p>

@@ -57,6 +57,7 @@ export default function TeacherAttendance() {
   const [students, setStudents] = useState([]);
   const [classLabel, setClassLabel] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [holiday, setHoliday] = useState(null);
   const [marks, setMarks] = useState({});
   const [pendingSend, setPendingSend] = useState(false);
   const [draftTime, setDraftTime] = useState(null);
@@ -129,9 +130,10 @@ export default function TeacherAttendance() {
       setClassLabel(res.data.className);
       setStudents(list);
       setSubmitted(res.data.submitted);
+      setHoliday(res.data.holiday || null);
       writeJSON(cacheKey, { className: res.data.className, students: list });
 
-      if (res.data.submitted) {
+      if (res.data.submitted || res.data.holiday) {
         removeKey(draftKey);
         setMarks({});
         setPendingSend(false);
@@ -150,6 +152,7 @@ export default function TeacherAttendance() {
           setClassLabel(cached.className);
           setStudents(cached.students);
           setSubmitted(false);
+          setHoliday(null);
           restoreDraft(cached.students, null, today);
         } else {
           toast.error('Could not connect to the server');
@@ -229,6 +232,10 @@ export default function TeacherAttendance() {
         );
       } else if (err.response.data?.code === 'DATE_MISMATCH') {
         await handleNewDay();
+      } else if (err.response.data?.code === 'HOLIDAY') {
+        removeKey(draftKey);
+        toast.error(err.response.data.message);
+        await load();
       } else {
         toast.error(err.response.data?.message || 'Could not connect to the server');
         if (err.response.status === 409) {
@@ -259,6 +266,10 @@ export default function TeacherAttendance() {
         );
       } else if (err.response.data?.code === 'DATE_MISMATCH') {
         await handleNewDay();
+      } else if (err.response.data?.code === 'HOLIDAY') {
+        removeKey(draftKey);
+        toast.error(err.response.data.message);
+        await load();
       } else {
         toast.error(err.response.data?.message || 'Could not connect to the server');
         if (err.response.status === 409) {
@@ -272,6 +283,7 @@ export default function TeacherAttendance() {
   };
 
   const locked = busy || savingDraft;
+  const onHoliday = Boolean(holiday) && !submitted;
 
   return (
     <div>
@@ -287,6 +299,7 @@ export default function TeacherAttendance() {
 
         {classLabel &&
           students.length > 0 &&
+          !onHoliday &&
           (submitted ? (
             <span className="shrink-0 rounded-md bg-green-50 px-3 py-2 text-sm font-semibold text-green-700">
               Submitted
@@ -310,27 +323,36 @@ export default function TeacherAttendance() {
           ))}
       </div>
 
-      {!online && (
+      {onHoliday && (
+        <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <p className="font-semibold">
+            Today is a holiday{holiday.title ? `: ${holiday.title}` : ''}
+          </p>
+          <p className="mt-0.5">Attendance cannot be marked today.</p>
+        </div>
+      )}
+
+      {!online && !onHoliday && (
         <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           You are offline. You can keep marking attendance, it is saved as a draft on this device.
         </p>
       )}
 
-      {!submitted && unlocked && (
+      {!submitted && !onHoliday && unlocked && (
         <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           The principal has unlocked the attendance for today. Make the corrections and press
           Submit again.
         </p>
       )}
 
-      {!submitted && !unlocked && draftTime && !dirty && !pendingSend && (
+      {!submitted && !onHoliday && !unlocked && draftTime && !dirty && !pendingSend && (
         <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           Draft saved at {formatTime(draftTime)}. Mark late students when they arrive, then press
           Submit.
         </p>
       )}
 
-      {pendingSend && !submitted && (
+      {pendingSend && !submitted && !onHoliday && (
         <p className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           Unsent attendance is saved on this device. Press Draft or Submit to send it to the server.
         </p>
@@ -342,7 +364,7 @@ export default function TeacherAttendance() {
         <p className="mt-6 text-slate-500">
           No class is assigned to you yet. Please contact the principal.
         </p>
-      ) : students.length === 0 ? (
+      ) : onHoliday ? null : students.length === 0 ? (
         <p className="mt-6 text-slate-500">No students in your class yet. Add students first.</p>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
