@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getAttendanceHistory } from '../controllers/attendanceHistoryController.js';
+import { getHistoryExport } from '../controllers/attendanceExportController.js';
 import { changeRecordStatus } from '../controllers/attendanceCorrectionController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -19,6 +20,7 @@ const onlyAdmin = (req, res, next) => {
 
 router.use(protect, onlyAdmin);
 
+router.get('/export', wrap(getHistoryExport));
 router.get('/', wrap(getAttendanceHistory));
 router.patch('/:id', validate(changeStatusSchema), wrap(changeRecordStatus));
 

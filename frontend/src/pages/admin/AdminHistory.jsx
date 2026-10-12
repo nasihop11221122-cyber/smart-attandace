@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import ChangeStatusModal from '../../components/admin/ChangeStatusModal';
-
+import DownloadHistoryMenu from '../../components/admin/DownloadHistoryMenu';
 const inputClass =
   'w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2.5 text-slate-800 outline-none focus:border-blue-700 focus:ring-2 focus:ring-blue-700/20';
 
@@ -141,7 +141,10 @@ export default function AdminHistory() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-slate-800">Attendance History</h2>
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-semibold text-slate-800">Attendance History</h2>
+        <DownloadHistoryMenu />
+      </div>
       <p className="mt-1 text-sm text-slate-500">
         All attendance requests, with the decision and the location result.
       </p>
