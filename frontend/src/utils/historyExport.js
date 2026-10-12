@@ -1,7 +1,5 @@
 const LOW_PERCENT = 75;
 const TITLE = 'Complete Attendance History';
-const NOTE =
-  'Attendance % = Present / (Present + Absent). Leave days are counted as present. Below 75% is shown in red.';
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -81,13 +79,6 @@ export async function downloadHistoryExcel(data) {
   subtitle.fill = fill('FFDBEAFE');
   subtitle.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   sheet.getRow(2).height = 22;
-
-  sheet.mergeCells('A3:D3');
-  const note = sheet.getCell('A3');
-  note.value = NOTE;
-  note.font = { size: 9, italic: true, color: { argb: 'FF64748B' } };
-  note.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true };
-  sheet.getRow(3).height = 28;
 
   sheet.addRow([]);
 
@@ -196,11 +187,7 @@ export async function downloadHistoryPdf(data) {
   doc.setTextColor(219, 234, 254);
   doc.text(`All classes  |  Generated on ${generatedText(data.generatedAt)}`, margin, 74);
 
-  doc.setFontSize(9);
-  doc.setTextColor(...slate);
-  doc.text(NOTE, margin, 116);
-
-  let y = 136;
+  let y = 126;
 
   // ---- Har class ka hissa ----
   data.classes.forEach((cls) => {
