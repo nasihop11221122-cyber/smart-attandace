@@ -1,6 +1,7 @@
 const LOW_PERCENT = 75;
+const TITLE = 'Complete Attendance History';
 const NOTE =
-  'Attendance % = (Present + Leave) / Total days recorded. Leave days are counted as present.';
+  'Attendance % = Present / (Present + Absent). Leave days are counted as present. Below 75% is shown in red.';
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -19,16 +20,13 @@ const generatedText = (iso) =>
     minute: '2-digit',
   });
 
+// Leave ko present ginte hain
 const stats = (s) => {
-  const total = s.present + s.absent + s.leave;
-  const percent = total > 0 ? Math.round(((s.present + s.leave) / total) * 1000) / 10 : null;
-  return { total, percent };
-};
-
-const classAverage = (cls) => {
-  const values = cls.students.map((s) => stats(s).percent).filter((p) => p !== null);
-  if (values.length === 0) return null;
-  return Math.round((values.reduce((sum, p) => sum + p, 0) / values.length) * 10) / 10;
+  const present = s.present + s.leave;
+  const absent = s.absent;
+  const total = present + absent;
+  const percent = total > 0 ? Math.round((present / total) * 1000) / 10 : null;
+  return { present, absent, percent };
 };
 
 const saveBlob = (blob, filename) => {
@@ -51,147 +49,121 @@ export async function downloadHistoryExcel(data) {
   workbook.creator = 'Smart Attendance';
   workbook.created = new Date(data.generatedAt);
 
+  const fill = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
   const thin = { style: 'thin', color: { argb: 'FFE2E8F0' } };
   const border = { top: thin, left: thin, bottom: thin, right: thin };
 
-  const headerStyle = (cell) => {
-    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
-    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-    cell.border = border;
-  };
-
-  const zebra = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-
-  // ---- Summary sheet ----
-  const summary = workbook.addWorksheet('Summary', { views: [{ showGridLines: false }] });
-  summary.columns = [{ width: 28 }, { width: 28 }, { width: 12 }, { width: 16 }, { width: 22 }];
-
-  summary.mergeCells('A1:E1');
-  summary.getCell('A1').value = 'Attendance History Report';
-  summary.getCell('A1').font = { size: 18, bold: true, color: { argb: 'FF1D4ED8' } };
-
-  summary.mergeCells('A2:E2');
-  summary.getCell('A2').value = `Generated on ${generatedText(data.generatedAt)}`;
-  summary.getCell('A2').font = { color: { argb: 'FF64748B' } };
-
-  const summaryHead = summary.getRow(4);
-  summaryHead.values = ['Class', 'Form Master', 'Students', 'Days Recorded', 'Average Attendance'];
-  summaryHead.height = 22;
-  summaryHead.eachCell(headerStyle);
-
-  data.classes.forEach((cls, index) => {
-    const average = classAverage(cls);
-    const row = summary.addRow([
-      cls.className,
-      cls.teacherName,
-      cls.students.length,
-      cls.totalDays,
-      average === null ? '' : average / 100,
-    ]);
-    row.eachCell({ includeEmpty: true }, (cell, col) => {
-      cell.border = border;
-      cell.alignment = { vertical: 'middle', horizontal: col > 2 ? 'center' : 'left' };
-      if (index % 2 === 1) cell.fill = zebra;
-    });
-    row.getCell(5).numFmt = '0.0%';
+  const sheet = workbook.addWorksheet('Complete History', {
+    views: [{ state: 'frozen', ySplit: 2, showGridLines: false }],
+    pageSetup: {
+      orientation: 'portrait',
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      printTitlesRow: '1:2',
+    },
   });
+  sheet.columns = [{ width: 38 }, { width: 14 }, { width: 14 }, { width: 18 }];
 
-  // ---- Har class ki sheet ----
-  const used = new Set(['summary']);
-  const sheetName = (raw) => {
-    const base = (raw.replace(/[\\/?*[\]:]/g, ' ').trim() || 'Class').slice(0, 31);
-    let name = base;
-    let n = 2;
-    while (used.has(name.toLowerCase())) {
-      const suffix = ` (${n})`;
-      name = base.slice(0, 31 - suffix.length) + suffix;
-      n += 1;
-    }
-    used.add(name.toLowerCase());
-    return name;
-  };
+  // ---- Sab se upar ka title ----
+  sheet.mergeCells('A1:D1');
+  const title = sheet.getCell('A1');
+  title.value = TITLE;
+  title.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
+  title.fill = fill('FF1D4ED8');
+  title.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  sheet.getRow(1).height = 38;
 
+  sheet.mergeCells('A2:D2');
+  const subtitle = sheet.getCell('A2');
+  subtitle.value = `All classes  |  Generated on ${generatedText(data.generatedAt)}`;
+  subtitle.font = { size: 11, color: { argb: 'FF1E3A8A' } };
+  subtitle.fill = fill('FFDBEAFE');
+  subtitle.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  sheet.getRow(2).height = 22;
+
+  sheet.mergeCells('A3:D3');
+  const note = sheet.getCell('A3');
+  note.value = NOTE;
+  note.font = { size: 9, italic: true, color: { argb: 'FF64748B' } };
+  note.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true };
+  sheet.getRow(3).height = 28;
+
+  sheet.addRow([]);
+
+  // ---- Har class ka hissa ----
   data.classes.forEach((cls) => {
-    const sheet = workbook.addWorksheet(sheetName(cls.className), {
-      views: [{ state: 'frozen', ySplit: 5, showGridLines: false }],
-      pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
-    });
-    sheet.columns = [
-      { width: 10 },
-      { width: 28 },
-      { width: 28 },
-      { width: 10 },
-      { width: 10 },
-      { width: 10 },
-      { width: 12 },
-      { width: 14 },
-    ];
+    // Class ka naam
+    const banner = sheet.addRow([cls.className]);
+    sheet.mergeCells(`A${banner.number}:D${banner.number}`);
+    const bannerCell = banner.getCell(1);
+    bannerCell.font = { size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+    bannerCell.fill = fill('FF2563EB');
+    bannerCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    banner.height = 26;
 
-    sheet.mergeCells('A1:H1');
-    sheet.getCell('A1').value = cls.className;
-    sheet.getCell('A1').font = { size: 18, bold: true, color: { argb: 'FF1D4ED8' } };
+    // Form master aur tadad
+    const info = sheet.addRow([
+      `Form Master: ${cls.teacherName}   |   Students: ${cls.students.length}   |   Days recorded: ${cls.totalDays}`,
+    ]);
+    sheet.mergeCells(`A${info.number}:D${info.number}`);
+    const infoCell = info.getCell(1);
+    infoCell.font = { size: 10, color: { argb: 'FF334155' } };
+    infoCell.fill = fill('FFEFF6FF');
+    infoCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+    info.height = 20;
 
-    sheet.mergeCells('A2:H2');
-    sheet.getCell('A2').value = `Form Master: ${cls.teacherName}   |   Days recorded: ${cls.totalDays}`;
-    sheet.getCell('A2').font = { size: 11, color: { argb: 'FF334155' } };
+    if (cls.students.length === 0) {
+      const empty = sheet.addRow(['No students in this class.']);
+      sheet.mergeCells(`A${empty.number}:D${empty.number}`);
+      empty.getCell(1).font = { italic: true, color: { argb: 'FF64748B' } };
+      empty.getCell(1).alignment = { horizontal: 'left', indent: 1 };
+      sheet.addRow([]);
+      return;
+    }
 
-    sheet.mergeCells('A3:H3');
-    sheet.getCell('A3').value = `Generated on ${generatedText(data.generatedAt)}`;
-    sheet.getCell('A3').font = { color: { argb: 'FF64748B' } };
-
-    const head = sheet.getRow(5);
-    head.values = [
-      'Roll No',
-      'Student Name',
-      'Father Name',
-      'Present',
-      'Absent',
-      'Leave',
-      'Total Days',
-      'Attendance %',
-    ];
+    // Table ka header
+    const head = sheet.addRow(['Student Name', 'Present', 'Absent', 'Attendance %']);
     head.height = 22;
-    head.eachCell(headerStyle);
+    head.eachCell((cell, col) => {
+      cell.font = { bold: true, color: { argb: 'FF0F172A' } };
+      cell.fill = fill('FFE2E8F0');
+      cell.border = border;
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: col === 1 ? 'left' : 'center',
+        indent: col === 1 ? 1 : 0,
+      };
+    });
 
+    // Bachon ki rows
     cls.students.forEach((s, i) => {
-      const { total, percent } = stats(s);
-      const row = sheet.addRow([
-        s.rollNo,
-        s.name,
-        s.fatherName,
-        s.present,
-        s.absent,
-        s.leave,
-        total,
-        percent === null ? '' : percent / 100,
-      ]);
+      const { present, absent, percent } = stats(s);
+      const row = sheet.addRow([s.name, present, absent, percent === null ? '' : percent / 100]);
       row.eachCell({ includeEmpty: true }, (cell, col) => {
         cell.border = border;
         cell.alignment = {
           vertical: 'middle',
-          horizontal: col === 2 || col === 3 ? 'left' : 'center',
+          horizontal: col === 1 ? 'left' : 'center',
+          indent: col === 1 ? 1 : 0,
         };
-        if (i % 2 === 1) cell.fill = zebra;
+        if (i % 2 === 1) cell.fill = fill('FFF8FAFC');
       });
-      row.getCell(8).numFmt = '0.0%';
+      row.getCell(4).numFmt = '0.0%';
       if (percent !== null && percent < LOW_PERCENT) {
-        row.getCell(8).font = { bold: true, color: { argb: 'FFB91C1C' } };
-        row.getCell(8).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+        row.getCell(4).font = { bold: true, color: { argb: 'FFB91C1C' } };
+        row.getCell(4).fill = fill('FFFEE2E2');
       }
     });
 
-    const noteRow = sheet.rowCount + 2;
-    sheet.mergeCells(`A${noteRow}:H${noteRow}`);
-    sheet.getCell(`A${noteRow}`).value =
-      cls.students.length === 0 ? 'No students in this class.' : NOTE;
-    sheet.getCell(`A${noteRow}`).font = { italic: true, color: { argb: 'FF64748B' } };
-
-    if (cls.students.length > 0) sheet.autoFilter = { from: 'A5', to: 'H5' };
+    sheet.addRow([]);
   });
 
   const buffer = await workbook.xlsx.writeBuffer();
-  saveBlob(new Blob([buffer], { type: XLSX_TYPE }), `Attendance-History-${stamp(data.generatedAt)}.xlsx`);
+  saveBlob(
+    new Blob([buffer], { type: XLSX_TYPE }),
+    `Complete-Attendance-History-${stamp(data.generatedAt)}.xlsx`
+  );
 }
 
 /* ------------------------------- PDF ------------------------------- */
@@ -204,106 +176,101 @@ export async function downloadHistoryPdf(data) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 40;
+  const topMargin = 50;
+  const bottomMargin = 50;
 
   const blue = [29, 78, 216];
   const slate = [100, 116, 139];
 
-  // ---- Pehla page: Summary ----
+  // ---- Sab se upar ka title ----
+  doc.setFillColor(...blue);
+  doc.rect(0, 0, pageWidth, 96, 'F');
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
-  doc.setTextColor(...blue);
-  doc.text('Attendance History Report', margin, 60);
+  doc.setFontSize(24);
+  doc.setTextColor(255, 255, 255);
+  doc.text(TITLE, margin, 52);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
+  doc.setFontSize(11);
+  doc.setTextColor(219, 234, 254);
+  doc.text(`All classes  |  Generated on ${generatedText(data.generatedAt)}`, margin, 74);
+
+  doc.setFontSize(9);
   doc.setTextColor(...slate);
-  doc.text(`Generated on ${generatedText(data.generatedAt)}`, margin, 80);
+  doc.text(NOTE, margin, 116);
 
-  autoTable(doc, {
-    startY: 100,
-    margin: { left: margin, right: margin, bottom: 40 },
-    head: [['Class', 'Form Master', 'Students', 'Days Recorded', 'Avg Attendance']],
-    body: data.classes.map((cls) => {
-      const average = classAverage(cls);
-      return [
-        cls.className,
-        cls.teacherName,
-        String(cls.students.length),
-        String(cls.totalDays),
-        average === null ? '-' : `${average.toFixed(1)}%`,
-      ];
-    }),
-    theme: 'grid',
-    styles: { fontSize: 10, cellPadding: 6, lineColor: [226, 232, 240], lineWidth: 0.5 },
-    headStyles: { fillColor: blue, textColor: 255, halign: 'center' },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    columnStyles: {
-      2: { halign: 'center' },
-      3: { halign: 'center' },
-      4: { halign: 'center' },
-    },
-  });
+  let y = 136;
 
-  // ---- Har class ka alag page ----
+  // ---- Har class ka hissa ----
   data.classes.forEach((cls) => {
-    doc.addPage();
+    // Class ka naam aur kam az kam kuch rows ek hi page par rahein
+    if (y + 100 > pageHeight - bottomMargin) {
+      doc.addPage();
+      y = topMargin;
+    }
+
+    doc.setFillColor(...blue);
+    doc.roundedRect(margin, y, pageWidth - margin * 2, 28, 4, 4, 'F');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(...blue);
-    doc.text(cls.className, margin, 56);
+    doc.setFontSize(13);
+    doc.setTextColor(255, 255, 255);
+    doc.text(cls.className, margin + 12, y + 18);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(51, 65, 85);
-    doc.text(`Form Master: ${cls.teacherName}   |   Days recorded: ${cls.totalDays}`, margin, 76);
-
     doc.setFontSize(9);
-    doc.setTextColor(...slate);
-    doc.text(NOTE, margin, 94);
+    doc.setTextColor(219, 234, 254);
+    doc.text(
+      `Form Master: ${cls.teacherName}   |   ${cls.students.length} students`,
+      pageWidth - margin - 12,
+      y + 18,
+      { align: 'right' }
+    );
+
+    y += 34;
 
     if (cls.students.length === 0) {
-      doc.setFontSize(11);
-      doc.text('No students in this class.', margin, 124);
+      doc.setFontSize(10);
+      doc.setTextColor(...slate);
+      doc.text('No students in this class.', margin + 4, y + 14);
+      y += 44;
       return;
     }
 
-    const percents = cls.students.map((s) => stats(s).percent);
+    const rows = cls.students.map(stats);
 
     autoTable(doc, {
-      startY: 108,
-      margin: { left: margin, right: margin, bottom: 40 },
-      head: [
-        ['Roll No', 'Student Name', 'Father Name', 'Present', 'Absent', 'Leave', 'Total', 'Attendance %'],
-      ],
-      body: cls.students.map((s) => {
-        const { total, percent } = stats(s);
-        return [
-          String(s.rollNo),
-          s.name,
-          s.fatherName,
-          String(s.present),
-          String(s.absent),
-          String(s.leave),
-          String(total),
-          percent === null ? '-' : `${percent.toFixed(1)}%`,
-        ];
-      }),
+      startY: y,
+      margin: { top: topMargin, left: margin, right: margin, bottom: bottomMargin },
+      head: [['Student Name', 'Present', 'Absent', 'Attendance %']],
+      body: rows.map((r, i) => [
+        cls.students[i].name,
+        String(r.present),
+        String(r.absent),
+        r.percent === null ? '-' : `${r.percent.toFixed(1)}%`,
+      ]),
       theme: 'grid',
-      styles: { fontSize: 9, cellPadding: 5, lineColor: [226, 232, 240], lineWidth: 0.5 },
-      headStyles: { fillColor: blue, textColor: 255, halign: 'center' },
+      styles: { fontSize: 10, cellPadding: 6, lineColor: [226, 232, 240], lineWidth: 0.5 },
+      headStyles: {
+        fillColor: [226, 232, 240],
+        textColor: [15, 23, 42],
+        halign: 'center',
+        fontStyle: 'bold',
+      },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 45 },
-        3: { halign: 'center' },
-        4: { halign: 'center' },
-        5: { halign: 'center' },
-        6: { halign: 'center' },
-        7: { halign: 'center' },
+        0: { halign: 'left' },
+        1: { halign: 'center', cellWidth: 80 },
+        2: { halign: 'center', cellWidth: 80 },
+        3: { halign: 'center', cellWidth: 110 },
       },
       didParseCell: (hook) => {
-        if (hook.section === 'body' && hook.column.index === 7) {
-          const value = percents[hook.row.index];
+        if (hook.section === 'head' && hook.column.index === 0) {
+          hook.cell.styles.halign = 'left';
+        }
+        if (hook.section === 'body' && hook.column.index === 3) {
+          const value = rows[hook.row.index]?.percent;
           if (value !== null && value !== undefined && value < LOW_PERCENT) {
             hook.cell.styles.textColor = [185, 28, 28];
             hook.cell.styles.fontStyle = 'bold';
@@ -311,18 +278,22 @@ export async function downloadHistoryPdf(data) {
         }
       },
     });
+
+    y = (doc.lastAutoTable?.finalY ?? y) + 26;
   });
 
-  // ---- Har page par number ----
+  // ---- Har page par neeche ka patti aur page number ----
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i += 1) {
     doc.setPage(i);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(margin, pageHeight - 32, pageWidth - margin, pageHeight - 32);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...slate);
-    doc.text('Smart Attendance', margin, pageHeight - 20);
-    doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
+    doc.text('Smart Attendance', margin, pageHeight - 18);
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 18, { align: 'right' });
   }
 
-  doc.save(`Attendance-History-${stamp(data.generatedAt)}.pdf`);
+  doc.save(`Complete-Attendance-History-${stamp(data.generatedAt)}.pdf`);
 }
