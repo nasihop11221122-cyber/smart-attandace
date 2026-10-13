@@ -15,7 +15,7 @@ export default function Admin() {
       const res = await api.get('/admins');
       setAdmins(res.data.admins);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Admins load nahi ho sake');
+      toast.error(err.response?.data?.message || 'Could not load the admins');
     } finally {
       setLoading(false);
     }
@@ -26,23 +26,23 @@ export default function Admin() {
   }, [fetchAdmins]);
 
   const handleDelete = async (a) => {
-    if (!window.confirm(`Kya aap "${a.name}" ko delete karna chahte hain?`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${a.name}"?`)) return;
     try {
       await api.delete(`/admins/${a.id}`);
       toast.success('Admin deleted successfully');
       fetchAdmins();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Server se connect nahi ho saka');
+      toast.error(err.response?.data?.message || 'Could not connect to the server');
     }
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="flex items-center justify-between gap-4">
         <h2 className="text-2xl font-semibold text-slate-800">All Admins</h2>
         <button
           onClick={() => setCreateOpen(true)}
-          className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          className="shrink-0 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
         >
           Create
         </button>
@@ -51,31 +51,38 @@ export default function Admin() {
       {loading ? (
         <p className="mt-6 text-slate-500">Loading…</p>
       ) : admins.length === 0 ? (
-        <p className="mt-6 text-slate-500">Abhi koi admin nahi hai.</p>
+        <p className="mt-6 text-slate-500">No admins yet. Press Create to add the first one.</p>
       ) : (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {admins.map((a) => (
             <div
               key={a.id}
-              className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4"
+              className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
             >
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-700 text-lg font-bold text-white">
-                {a.name.charAt(0).toUpperCase()}
+              <div className="flex items-center gap-3">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-lg font-bold text-white">
+                  {a.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-slate-800" title={a.name}>
+                    {a.name}
+                  </p>
+                  <p className="truncate text-sm text-slate-500" title={a.email}>
+                    {a.email}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-slate-800">{a.name}</p>
-                <p className="truncate text-sm text-slate-500">{a.email}</p>
-              </div>
-              <div className="flex flex-col gap-2">
+
+              <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
                 <button
                   onClick={() => setEditing(a)}
-                  className="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                 >
                   Update
                 </button>
                 <button
                   onClick={() => handleDelete(a)}
-                  className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                  className="rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
                 >
                   Delete
                 </button>
