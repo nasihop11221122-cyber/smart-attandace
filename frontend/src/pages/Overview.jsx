@@ -59,15 +59,15 @@ function StatCard({ to, title, value, hint, linkLabel, gradient, icon }) {
   return (
     <Link
       to={to}
-      className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      className="group rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[var(--border-focus)] hover:shadow-[var(--glow)]"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
-          <p className="mt-2 text-4xl font-bold text-slate-800">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">{title}</p>
+          <p className="mt-2 text-4xl font-bold text-[var(--text-main)]">
             <AnimatedNumber value={value} />
           </p>
-          <p className="mt-1 text-sm text-slate-500">{hint}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{hint}</p>
         </div>
         <span
           className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br text-white shadow-sm ${gradient}`}
@@ -76,7 +76,7 @@ function StatCard({ to, title, value, hint, linkLabel, gradient, icon }) {
         </span>
       </div>
 
-      <div className="mt-5 flex items-center gap-1 border-t border-slate-100 pt-4 text-sm font-semibold text-blue-700">
+      <div className="mt-5 flex items-center gap-1 border-t border-[var(--border)] pt-4 text-sm font-semibold text-[var(--primary)]">
         {linkLabel}
         <Svg className="h-4 w-4 transition group-hover:translate-x-1">
           <line x1="5" y1="12" x2="19" y2="12" />
@@ -145,8 +145,8 @@ export default function Overview() {
       <div>
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-slate-800">Today's overview</h3>
-            <p className="text-sm text-slate-500">Students of the offline and the online system</p>
+            <h3 className="text-lg font-semibold text-[var(--text-main)]">Today's overview</h3>
+            <p className="text-sm text-[var(--text-muted)]">Students of the offline and the online system</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
             <span className="relative flex h-2 w-2">

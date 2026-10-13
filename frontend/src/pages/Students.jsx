@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { ArrowLeft, Users, School } from 'lucide-react';
 import api from '../api/axios';
+import { useLanguage } from '../context/LanguageContext';
 
 const cardClass =
-  'flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 text-left';
+  'flex w-full flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 text-left transition-all hover:border-[var(--border-focus)] hover:shadow-[var(--glow)]';
 
 function Header({ title, text, onBack }) {
+  const { isRTL } = useLanguage();
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-2xl font-semibold text-slate-800">{title}</h2>
-        <p className="mt-1 text-sm text-slate-500">{text}</p>
+        <h2 className="text-2xl font-bold tracking-tight text-[var(--text-main)]">{title}</h2>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">{text}</p>
       </div>
       <button
         onClick={onBack}
-        className="shrink-0 rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] transition hover:border-[var(--border-focus)]"
       >
-        Back
+        <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
+        <span>Back</span>
       </button>
     </div>
   );
@@ -24,14 +29,14 @@ function Header({ title, text, onBack }) {
 
 function CountCard({ name, count }) {
   return (
-    <div className={cardClass}>
-      <h3 className="truncate text-lg font-semibold text-slate-800" title={name}>
+    <motion.div whileHover={{ y: -3 }} className={cardClass}>
+      <h3 className="truncate text-lg font-bold text-[var(--text-main)]" title={name}>
         {name}
       </h3>
-      <p className="text-sm text-slate-500">
-        Students: <span className="text-base font-semibold text-blue-700">{count}</span>
+      <p className="text-sm text-[var(--text-muted)]">
+        Students: <span className="text-base font-extrabold text-[var(--primary)]">{count}</span>
       </p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -54,12 +59,12 @@ export default function Students() {
     };
   }, []);
 
-  if (loading) return <p className="text-slate-500">Loading…</p>;
+  if (loading) return <p className="text-[var(--text-muted)]">Loading…</p>;
   if (!data) return null;
 
   if (view === 'online') {
     return (
-      <div>
+      <div className="space-y-6">
         <Header
           title="Online Students"
           text="All programs, with the students of all their semesters."
@@ -67,9 +72,9 @@ export default function Students() {
         />
 
         {data.programs.length === 0 ? (
-          <p className="mt-6 text-slate-500">No programs yet.</p>
+          <p className="text-sm text-[var(--text-muted)]">No programs yet.</p>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {data.programs.map((p) => (
               <CountCard key={p.program} name={p.program} count={p.students} />
             ))}
@@ -81,7 +86,7 @@ export default function Students() {
 
   if (view === 'manual') {
     return (
-      <div>
+      <div className="space-y-6">
         <Header
           title="Manual Students"
           text="All classes of the offline system, with their students."
@@ -89,9 +94,9 @@ export default function Students() {
         />
 
         {data.manualClasses.length === 0 ? (
-          <p className="mt-6 text-slate-500">No classes yet.</p>
+          <p className="text-sm text-[var(--text-muted)]">No classes yet.</p>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {data.manualClasses.map((c) => (
               <CountCard key={c.name} name={c.name} count={c.students} />
             ))}
@@ -102,25 +107,39 @@ export default function Students() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-slate-800">Students</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold tracking-tight text-[var(--text-main)]">Students</h2>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <button
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <motion.button
+          whileHover={{ y: -3, scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
           onClick={() => setView('online')}
-          className={`${cardClass} transition hover:border-blue-700 hover:shadow-sm`}
+          className={`${cardClass} cursor-pointer`}
         >
-          <h3 className="text-lg font-semibold text-slate-800">Online Students</h3>
-          <p className="text-3xl font-semibold text-blue-700">{data.onlineTotal}</p>
-        </button>
+          <div className="flex items-center justify-between w-full">
+            <h3 className="text-lg font-bold text-[var(--text-main)]">Online Students</h3>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--bg-elevated)] text-[var(--primary)] border border-[var(--border)]">
+              <Users className="h-5 w-5" />
+            </span>
+          </div>
+          <p className="text-3xl font-black text-[var(--primary)]">{data.onlineTotal}</p>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ y: -3, scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
           onClick={() => setView('manual')}
-          className={`${cardClass} transition hover:border-blue-700 hover:shadow-sm`}
+          className={`${cardClass} cursor-pointer`}
         >
-          <h3 className="text-lg font-semibold text-slate-800">Manual Students</h3>
-          <p className="text-3xl font-semibold text-blue-700">{data.manualTotal}</p>
-        </button>
+          <div className="flex items-center justify-between w-full">
+            <h3 className="text-lg font-bold text-[var(--text-main)]">Manual Students</h3>
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--bg-elevated)] text-[var(--primary)] border border-[var(--border)]">
+              <School className="h-5 w-5" />
+            </span>
+          </div>
+          <p className="text-3xl font-black text-[var(--primary)]">{data.manualTotal}</p>
+        </motion.button>
       </div>
     </div>
   );

@@ -229,12 +229,12 @@ export default function AttendanceOverview({ stats, notifications, showCards = t
       {showCards && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {cards.map((c) => (
-            <div key={c.key} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="flex items-center gap-2 text-sm text-slate-500">
-                <span className={`h-2 w-2 rounded-sm ${c.dot}`} />
+            <div key={c.key} className="ultra-card p-5 shadow-sm transition-all hover:scale-102 hover:-translate-y-1">
+              <p className="flex items-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
+                <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} />
                 {c.label}
               </p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums text-slate-800">
+              <p className="mt-2 text-3xl font-bold tabular-nums text-[var(--text-main)]">
                 {stats[c.key].toLocaleString()}
               </p>
             </div>
@@ -242,15 +242,15 @@ export default function AttendanceOverview({ stats, notifications, showCards = t
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="ultra-card p-6 shadow-sm transition-all">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm text-slate-500">Today's attendance</p>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="text-sm font-bold text-[var(--text-main)]">Today's attendance</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
               {present.toLocaleString()} present out of {totalStudents.toLocaleString()} students
             </p>
           </div>
-          <p className="text-4xl font-semibold tabular-nums text-slate-800">{percent}%</p>
+          <p className="text-4xl font-black tabular-nums text-[var(--primary)]">{percent}%</p>
         </div>
 
         <AttendanceLine notifications={notifications} totalStudents={totalStudents} />

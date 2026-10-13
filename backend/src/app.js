@@ -23,6 +23,7 @@ import studentRequestRoutes from './routes/studentRequestRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
 import attendanceHistoryRoutes from './routes/attendanceHistoryRoutes.js';
 import historyExportRoutes from './routes/historyExportRoutes.js';
+import systemSettingRoutes from './routes/systemSettingRoutes.js';
 
 const app = express();
 
@@ -30,15 +31,26 @@ app.set('trust proxy', 1); // Render/Railway/Heroku proxy ke peeche zaroori hai 
 app.disable('x-powered-by');
 app.use(helmet());
 
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  // Allow localhost or 127.0.0.1 on any port
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  // Check configured client URLs
+  if (env.clientUrls.includes(origin)) return true;
+  // In development mode, allow local network IPs as well
+  if (!env.isProd && /^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin)) return true;
+  return false;
+};
+
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || env.clientUrls.includes(origin)) return cb(null, true);
+      if (isAllowedOrigin(origin)) return cb(null, true);
       cb(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'X-Requested-With', 'Authorization'],
   })
 );
 
@@ -66,6 +78,7 @@ app.use('/api/student/attendance', studentRequestRoutes);
 app.use('/api/admin/holidays', holidayRoutes);
 app.use('/api/principal/holidays', schoolHolidayRoutes);
 app.use('/api/admin/history', attendanceHistoryRoutes);
+app.use('/api/system/settings', systemSettingRoutes);
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // eslint-disable-next-line no-unused-varsa

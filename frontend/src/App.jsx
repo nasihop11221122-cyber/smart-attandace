@@ -2,11 +2,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { SystemProvider } from './context/SystemContext';
+import EmergencyLockdownOverlay from './components/EmergencyLockdownOverlay';
 import { ProtectedRoute, PublicRoute } from './components/RouteGuards';
 import AuthForm from './pages/AuthForm';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import SuperAdminSettings from './pages/SuperAdminSettings';
 import Overview from './pages/Overview';
 import Principal from './pages/Principal';
 import Admin from './pages/Admin';
@@ -39,63 +43,69 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<PublicRoute><AuthForm mode="login" /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><AuthForm mode="register" /></PublicRoute>} />
-          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route
-            path="/super-admin"
-            element={<ProtectedRoute role="super_admin"><SuperAdminDashboard /></ProtectedRoute>}
-          >
-            <Route index element={<Overview />} />
-            <Route path="principal" element={<Principal />} />
-            <Route path="admin" element={<Admin />} />
-            <Route path="teachers" element={<Teachers />} />
-            <Route path="students" element={<Students />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
-          <Route
-            path="/admin"
-            element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>}
-          >
-            <Route index element={<AdminHome />} />
-            <Route path="students" element={<AdminStudents />} />
-            <Route path="classes" element={<AdminClasses />} />
-            <Route path="holidays" element={<AdminHolidays />} />
-            <Route path="history" element={<AdminHistory />} />
-            <Route path="profile" element={<AdminProfile />} />
-          </Route>
-          <Route
-            path="/principal"
-            element={<ProtectedRoute role="principal"><PrincipalDashboard /></ProtectedRoute>}
-          >
-            <Route index element={<PrincipalHome />} />
-            <Route path="teacher" element={<PrincipalTeacher />} />
-            <Route path="history" element={<PrincipalHistory />} />
-            <Route path="holidays" element={<PrincipalHolidays />} />
-            <Route path="profile" element={<PrincipalProfile />} />
-          </Route>
-          <Route
-            path="/teacher"
-            element={<ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>}
-          >
-            <Route index element={<Navigate to="students" replace />} />
-            <Route path="students" element={<TeacherStudents />} />
-            <Route path="attendance" element={<TeacherAttendance />} />
-            <Route path="profile" element={<TeacherProfile />} />
-          </Route>
-          <Route
-            path="/student"
-            element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
-          >
-            <Route index element={<StudentAttendance />} />
-            <Route path="history" element={<StudentHistory />} />
-            <Route path="profile" element={<StudentProfile />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-        <ToastContainer position="top-right" autoClose={3000} />
+        <LanguageProvider>
+          <SystemProvider>
+            <EmergencyLockdownOverlay />
+            <Routes>
+              <Route path="/login" element={<PublicRoute><AuthForm mode="login" /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><AuthForm mode="register" /></PublicRoute>} />
+              <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route
+                path="/super-admin"
+                element={<ProtectedRoute role="super_admin"><SuperAdminDashboard /></ProtectedRoute>}
+              >
+                <Route index element={<Overview />} />
+                <Route path="principal" element={<Principal />} />
+                <Route path="admin" element={<Admin />} />
+                <Route path="teachers" element={<Teachers />} />
+                <Route path="students" element={<Students />} />
+                <Route path="settings" element={<SuperAdminSettings />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+              <Route
+                path="/admin"
+                element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>}
+              >
+                <Route index element={<AdminHome />} />
+                <Route path="students" element={<AdminStudents />} />
+                <Route path="classes" element={<AdminClasses />} />
+                <Route path="holidays" element={<AdminHolidays />} />
+                <Route path="history" element={<AdminHistory />} />
+                <Route path="profile" element={<AdminProfile />} />
+              </Route>
+              <Route
+                path="/principal"
+                element={<ProtectedRoute role="principal"><PrincipalDashboard /></ProtectedRoute>}
+              >
+                <Route index element={<PrincipalHome />} />
+                <Route path="teacher" element={<PrincipalTeacher />} />
+                <Route path="history" element={<PrincipalHistory />} />
+                <Route path="holidays" element={<PrincipalHolidays />} />
+                <Route path="profile" element={<PrincipalProfile />} />
+              </Route>
+              <Route
+                path="/teacher"
+                element={<ProtectedRoute role="teacher"><TeacherDashboard /></ProtectedRoute>}
+              >
+                <Route index element={<Navigate to="students" replace />} />
+                <Route path="students" element={<TeacherStudents />} />
+                <Route path="attendance" element={<TeacherAttendance />} />
+                <Route path="profile" element={<TeacherProfile />} />
+              </Route>
+              <Route
+                path="/student"
+                element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
+              >
+                <Route index element={<StudentAttendance />} />
+                <Route path="history" element={<StudentHistory />} />
+                <Route path="profile" element={<StudentProfile />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+            <ToastContainer position="top-right" autoClose={3000} />
+          </SystemProvider>
+        </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
   );

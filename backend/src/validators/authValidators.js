@@ -31,10 +31,18 @@ export const profileSchema = z
     email: z.string().trim().toLowerCase().email('Please enter a valid email').optional(),
     password: password.optional(),
     currentPassword: z.string().min(1, 'Current password is required').max(72).optional(),
+    language: z.enum(['en', 'ar', 'ur']).optional(),
   })
-  .refine((d) => d.name !== undefined || d.email !== undefined || d.password !== undefined, {
-    message: 'Please provide at least one field to update',
-  })
+  .refine(
+    (d) =>
+      d.name !== undefined ||
+      d.email !== undefined ||
+      d.password !== undefined ||
+      d.language !== undefined,
+    {
+      message: 'Please provide at least one field to update',
+    }
+  )
   .refine((d) => d.password === undefined || d.currentPassword !== undefined, {
     message: 'Current password is required',
   });

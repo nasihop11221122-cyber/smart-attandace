@@ -15,7 +15,7 @@ const cookieOptions = {
 
 const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 12);
 
-const publicUser = (u) => ({ id: u._id, name: u.name, email: u.email, role: u.role });
+const publicUser = (u) => ({ id: u._id, name: u.name, email: u.email, role: u.role, language: u.language || 'en' });
 
 const sendToken = (res, user, status = 200) => {
   const token = jwt.sign({ id: user._id, role: user.role }, env.jwtSecret, {
@@ -72,11 +72,12 @@ export const logout = (req, res) => {
 export const me = (req, res) => res.json({ user: publicUser(req.user) });
 
 export const updateProfile = async (req, res) => {
-  const { name, email, password, currentPassword } = req.body;
+  const { name, email, password, currentPassword, language } = req.body;
 
   const user = await User.findById(req.user._id).select('+password');
 
   if (name !== undefined) user.name = name;
+  if (language !== undefined) user.language = language;
 
   if (email !== undefined && email !== user.email) {
     const taken = await User.findOne({ email });

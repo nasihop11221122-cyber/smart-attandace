@@ -1,22 +1,55 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard,
+  Building2,
+  ShieldCheck,
+  GraduationCap,
+  Users,
+  BookOpen,
+  Calendar,
+  History as HistoryIcon,
+  ClipboardCheck,
+  Sliders,
+  UserCircle,
+  LogOut,
+  Menu,
+  X,
+  Sun,
+  Moon,
+  Languages,
+  ShieldAlert,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useSystem } from '../context/SystemContext';
 
-const roleLabels = {
-  super_admin: 'Super Admin',
-  admin: 'Admin',
-  principal: 'Principal',
-  teacher: 'Teacher',
-  student: 'Student',
+const iconMap = {
+  overview: LayoutDashboard,
+  principal: Building2,
+  admin: ShieldCheck,
+  teachers: GraduationCap,
+  teacher: GraduationCap,
+  students: Users,
+  classes: BookOpen,
+  holidays: Calendar,
+  history: HistoryIcon,
+  attendance: ClipboardCheck,
+  settings: Sliders,
+  profile: UserCircle,
 };
 
 export default function DashboardLayout({ children, links = [] }) {
   const { user, logout } = useAuth();
+  const { t, language, setLanguage, isRTL } = useLanguage();
+  const { themeMode, toggleThemeMode, emergencyMode } = useSystem();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const initial = user?.name?.trim().charAt(0).toUpperCase() || '?';
-  const roleName = roleLabels[user?.role] || '';
+  const roleKey = `${user?.role}_role`;
+  const roleName = t(roleKey) || user?.role?.replace('_', ' ') || '';
 
   const onLogout = async () => {
     try {
@@ -27,43 +60,71 @@ export default function DashboardLayout({ children, links = [] }) {
     setSidebarOpen(false);
   };
 
+  const getLinkLabel = (link) => {
+    const key = (link.key || link.label || '').toLowerCase();
+    const translated = t(key);
+    return translated !== key ? translated : link.label;
+  };
+
+  const getLinkIcon = (link) => {
+    const key = (link.key || link.label || '').toLowerCase();
+    const IconComponent = iconMap[key] || LayoutDashboard;
+    return <IconComponent className="h-4 w-4 shrink-0" />;
+  };
+
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="min-h-screen theme-app flex transition-colors duration-200">
+      {/* SIDEBAR NAVIGATION */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-52 shrink-0 flex-col border-r border-slate-200 bg-white transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 ${
+          isRTL ? 'right-0 border-l' : 'left-0 border-r'
+        } z-50 h-full w-60 shrink-0 flex flex-col border-[var(--border)] bg-[var(--bg-surface)] transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          sidebarOpen
+            ? 'translate-x-0'
+            : isRTL
+            ? 'translate-x-full'
+            : '-translate-x-full'
         }`}
         aria-label="Sidebar navigation"
       >
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 lg:hidden">
-          <div
-            title={user?.name}
-            className="grid h-10 w-10 place-items-center rounded-full bg-blue-700 text-lg font-semibold text-white"
-          >
-            {initial}
+        {/* Brand / Logo Header */}
+        <div className="flex h-16 items-center justify-between border-b border-[var(--border)] px-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              title={user?.name}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--primary)] text-sm font-black text-[var(--primary-fg)] shadow-[0_0_15px_var(--glow)]"
+            >
+              {initial}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-black uppercase tracking-wider text-[var(--text-main)]">
+                Smart Attendance
+              </p>
+              <p className="truncate text-[11px] font-semibold text-[var(--primary)]">
+                {roleName}
+              </p>
+            </div>
           </div>
+
           <button
             onClick={() => setSidebarOpen(false)}
-            className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
+            className="rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] lg:hidden"
             aria-label="Close sidebar"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex h-16 items-center border-b border-slate-200 px-4 hidden lg:flex">
-          <div
-            title={user?.name}
-            className="grid h-10 w-10 place-items-center rounded-full bg-blue-700 text-lg font-semibold text-white"
-          >
-            {initial}
+        {/* Emergency Alert Mini Banner inside sidebar if active */}
+        {emergencyMode && (
+          <div className="mx-3 mt-3 flex items-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 p-2.5 text-xs font-bold text-red-400 animate-pulse">
+            <ShieldAlert className="h-4 w-4 shrink-0" />
+            <span className="truncate">LOCKDOWN ACTIVE</span>
           </div>
-        </div>
+        )}
 
-        <nav className="flex w-full flex-1 flex-col gap-1 pt-4 px-4">
+        {/* Navigation Links */}
+        <nav className="flex w-full flex-1 flex-col gap-1.5 p-3 overflow-y-auto">
           {links.map((link) => (
             <NavLink
               key={link.to}
@@ -71,67 +132,110 @@ export default function DashboardLayout({ children, links = [] }) {
               end={link.end}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition ${
-                  isActive ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-100'
+                `group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-semibold tracking-wide transition-all ${
+                  isActive
+                    ? 'bg-[var(--primary)] text-[var(--primary-fg)] shadow-[0_0_15px_var(--glow)] font-bold'
+                    : 'text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-main)]'
                 }`
               }
             >
-              {link.label}
+              {getLinkIcon(link)}
+              <span className="truncate">{getLinkLabel(link)}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="p-4">
+        {/* Sidebar Footer (Logout) */}
+        <div className="p-3 border-t border-[var(--border)]">
           <button
             onClick={onLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-md border border-red-200 bg-red-50 py-2.5 font-semibold text-red-600 transition hover:bg-red-600 hover:text-white"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-2.5 text-xs font-bold text-red-400 transition hover:bg-red-500 hover:text-white"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Log out
+            <LogOut className="h-3.5 w-3.5" />
+            <span>{t('logout')}</span>
           </button>
         </div>
       </aside>
 
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {/* Backdrop for Mobile Sidebar */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
-      <div className="flex min-w-0 flex-1 flex-col lg:pl-52">
-        <header className="fixed top-0 right-0 z-40 h-16 w-full lg:w-auto lg:static lg:left-52 border-b border-slate-200 bg-white px-4 lg:px-6 lg:z-auto">
-          <div className="flex items-center justify-between h-full">
+      {/* MAIN CONTENT AREA */}
+      <div
+        className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ${
+          isRTL ? 'lg:pr-60' : 'lg:pl-60'
+        }`}
+      >
+        {/* Top Header Navbar */}
+        <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[var(--border)] bg-[var(--bg-surface)]/80 backdrop-blur-md px-4 sm:px-6">
+          <div className="flex items-center gap-3">
             <button
-              className="lg:hidden mr-4 rounded-md p-2 text-slate-600 hover:bg-slate-100"
+              className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--bg-elevated)] lg:hidden"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
+              <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-semibold text-slate-800">{roleName}</h1>
+            <h1 className="text-base sm:text-lg font-bold tracking-tight text-[var(--text-main)]">
+              {roleName}
+            </h1>
+          </div>
+
+          {/* Quick Header Controls (Dark/Light Mode & Language Pill) */}
+          <div className="flex items-center gap-2">
+            {/* Theme mode toggle */}
+            <button
+              onClick={toggleThemeMode}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--border-focus)] transition"
+              title="Toggle Light / Dark Mode"
+            >
+              {themeMode === 'dark' ? (
+                <Sun className="h-4 w-4 text-amber-400" />
+              ) : (
+                <Moon className="h-4 w-4 text-indigo-500" />
+              )}
+            </button>
+
+            {/* Language Quick Switcher */}
+            <div className="flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-1 text-xs font-bold">
+              {['en', 'ar', 'ur'].map((code) => (
+                <button
+                  key={code}
+                  onClick={() => setLanguage(code)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] uppercase transition ${
+                    language === code
+                      ? 'bg-[var(--primary)] text-[var(--primary-fg)] shadow-xs'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  {code}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 pt-16 p-4 lg:p-6 lg:pt-0">{children ?? <Outlet />}</main>
+        {/* Dynamic Page Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {children ?? <Outlet />}
+          </motion.div>
+        </main>
       </div>
     </div>
   );

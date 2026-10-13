@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema(
     // Naye phone ki request jo admin ki manzoori ka intezar kar rahi hai
     pendingDeviceId: { type: String, trim: true, maxlength: 64 },
     pendingDeviceAt: { type: Date },
+    language: { type: String, enum: ['en', 'ar', 'ur'], default: 'en' },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpires: { type: Date, select: false },
   },
