@@ -220,25 +220,27 @@ function AttendanceLine({ notifications, totalStudents }) {
   );
 }
 
-export default function AttendanceOverview({ stats, notifications }) {
+export default function AttendanceOverview({ stats, notifications, showCards = true }) {
   const { totalStudents, present } = stats;
   const percent = totalStudents > 0 ? Math.round((present / totalStudents) * 100) : 0;
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {cards.map((c) => (
-          <div key={c.key} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="flex items-center gap-2 text-sm text-slate-500">
-              <span className={`h-2 w-2 rounded-sm ${c.dot}`} />
-              {c.label}
-            </p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums text-slate-800">
-              {stats[c.key].toLocaleString()}
-            </p>
-          </div>
-        ))}
-      </div>
+      {showCards && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {cards.map((c) => (
+            <div key={c.key} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="flex items-center gap-2 text-sm text-slate-500">
+                <span className={`h-2 w-2 rounded-sm ${c.dot}`} />
+                {c.label}
+              </p>
+              <p className="mt-2 text-3xl font-semibold tabular-nums text-slate-800">
+                {stats[c.key].toLocaleString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-end justify-between gap-4">

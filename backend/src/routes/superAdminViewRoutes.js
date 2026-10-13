@@ -5,6 +5,7 @@ import {
   getStudentDays,
   getClassDay,
 } from '../controllers/historyController.js';
+import { getStudentsOverview } from '../controllers/superAdminStudentsController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = Router();
@@ -24,6 +25,7 @@ router.use(protect, onlySuperAdmin);
 // Sirf dekhne ke liye (GET), koi create, update ya delete nahi
 router.get('/teachers', wrap(getTeachers));
 router.get('/students', wrap(getClassStudents));
+router.get('/students-overview', wrap(getStudentsOverview));
 router.get('/student/:id', wrap(getStudentDays));
 router.get('/day', wrap(getClassDay));
 
