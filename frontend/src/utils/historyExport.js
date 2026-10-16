@@ -74,7 +74,7 @@ export async function downloadHistoryExcel(data) {
 
   sheet.mergeCells('A2:D2');
   const subtitle = sheet.getCell('A2');
-  subtitle.value = `All classes  |  Generated on ${generatedText(data.generatedAt)}`;
+  subtitle.value = `${data.label || 'All classes'}  |  Generated on ${generatedText(data.generatedAt)}`;
   subtitle.font = { size: 11, color: { argb: 'FF1E3A8A' } };
   subtitle.fill = fill('FFDBEAFE');
   subtitle.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
@@ -185,7 +185,11 @@ export async function downloadHistoryPdf(data) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.setTextColor(219, 234, 254);
-  doc.text(`All classes  |  Generated on ${generatedText(data.generatedAt)}`, margin, 74);
+  doc.text(
+    `${data.label || 'All classes'}  |  Generated on ${generatedText(data.generatedAt)}`,
+    margin,
+    74
+  );
 
   let y = 126;
 

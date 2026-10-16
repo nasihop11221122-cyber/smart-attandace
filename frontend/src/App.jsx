@@ -38,6 +38,7 @@ import StudentHistory from './pages/student/StudentHistory';
 import StudentProfile from './pages/student/StudentProfile';
 import AdminHolidays from './pages/admin/AdminHolidays';
 import AdminHistory from './pages/admin/AdminHistory';
+import TeacherHistory from './pages/teacher/TeacherHistory.jsx';
 
 export default function App() {
   return (
@@ -92,6 +93,7 @@ export default function App() {
                 <Route path="students" element={<TeacherStudents />} />
                 <Route path="attendance" element={<TeacherAttendance />} />
                 <Route path="profile" element={<TeacherProfile />} />
+                <Route path="history" element={<TeacherHistory />} />
               </Route>
               <Route
                 path="/student"
