@@ -53,12 +53,90 @@ export const register = async (req, res) => {
   }
 };
 
+const ATTEMPT_WINDOW_MS = 60 * 1000; // 1 minute window
+const LOCKOUT_THRESHOLD = 10;        // 10 failed attempts within 1 minute
+
+const getLockoutDurationMs = (stage) => {
+  if (stage <= 1) return 10 * 60 * 1000;  // 1st lockout: 10 minutes
+  if (stage === 2) return 30 * 60 * 1000; // 2nd lockout: 30 minutes
+  if (stage === 3) return 60 * 60 * 1000; // 3rd lockout: 1 hour (60 minutes)
+  return Math.min(stage * 60 * 60 * 1000, 24 * 60 * 60 * 1000); // 4th+: 2 hours, 3 hours...
+};
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
+  const now = Date.now();
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email }).select(
+    '+password +failedLoginAttempts +failedAttemptWindowStart +lockoutStage +lockUntil'
+  );
+
+  // 1. Check if user is currently locked out
+  if (user && user.lockUntil && user.lockUntil.getTime() > now) {
+    const remainingMs = user.lockUntil.getTime() - now;
+    const remainingMins = Math.ceil(remainingMs / (60 * 1000));
+    return res.status(423).json({
+      message: `Account is temporarily locked due to too many failed attempts. Please try again in ${remainingMins} minute${remainingMins > 1 ? 's' : ''}.`,
+      locked: true,
+      remainingMinutes: remainingMins,
+    });
+  }
+
+  // 2. Validate password
   const ok = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);
-  if (!user || !ok) return res.status(401).json({ message: 'Invalid email or password' });
+
+  if (!user || !ok) {
+    if (user) {
+      const windowStart = user.failedAttemptWindowStart ? user.failedAttemptWindowStart.getTime() : 0;
+      let attempts = user.failedLoginAttempts || 0;
+      let stage = user.lockoutStage || 0;
+
+      // If attempts occurred outside the 1-minute window, reset window and start count at 1
+      if (!windowStart || now - windowStart > ATTEMPT_WINDOW_MS) {
+        attempts = 1;
+        user.failedAttemptWindowStart = new Date(now);
+      } else {
+        attempts += 1;
+      }
+      user.failedLoginAttempts = attempts;
+
+      // If threshold reached (10 failed attempts within 1 minute)
+      if (attempts >= LOCKOUT_THRESHOLD) {
+        stage += 1;
+        user.lockoutStage = stage;
+        const durationMs = getLockoutDurationMs(stage);
+        user.lockUntil = new Date(now + durationMs);
+        user.failedLoginAttempts = 0;
+        user.failedAttemptWindowStart = null;
+        await user.save();
+
+        const lockMins = Math.round(durationMs / (60 * 1000));
+        return res.status(423).json({
+          message: `Too many failed attempts (10 in 1 minute). Your account has been locked for ${lockMins} minutes.`,
+          locked: true,
+          remainingMinutes: lockMins,
+        });
+      }
+
+      await user.save();
+
+      const remainingAttempts = LOCKOUT_THRESHOLD - attempts;
+      return res.status(401).json({
+        message: `Invalid email or password. Warning: ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining before account lockout.`,
+      });
+    }
+
+    return res.status(401).json({ message: 'Invalid email or password' });
+  }
+
+  // 3. Login successful! Reset all lockout counters
+  if (user.failedLoginAttempts > 0 || user.lockoutStage > 0 || user.lockUntil) {
+    user.failedLoginAttempts = 0;
+    user.failedAttemptWindowStart = null;
+    user.lockoutStage = 0;
+    user.lockUntil = null;
+    await user.save();
+  }
 
   sendToken(res, user);
 };

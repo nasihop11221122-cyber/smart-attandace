@@ -51,7 +51,13 @@ export async function downloadHistoryExcel(data) {
   const thin = { style: 'thin', color: { argb: 'FFE2E8F0' } };
   const border = { top: thin, left: thin, bottom: thin, right: thin };
 
-  const sheet = workbook.addWorksheet('Complete History', {
+  const reportTitle = data.label
+    ? `${data.label} Attendance`
+    : (data.classes?.length === 1 ? `${data.classes[0].className} Attendance` : TITLE);
+
+  const safeSheetName = reportTitle.slice(0, 31).replace(/[*?:/\\\[\]]/g, ' ');
+
+  const sheet = workbook.addWorksheet(safeSheetName, {
     views: [{ state: 'frozen', ySplit: 2, showGridLines: false }],
     pageSetup: {
       orientation: 'portrait',
@@ -66,7 +72,7 @@ export async function downloadHistoryExcel(data) {
   // ---- Sab se upar ka title ----
   sheet.mergeCells('A1:D1');
   const title = sheet.getCell('A1');
-  title.value = TITLE;
+  title.value = reportTitle;
   title.font = { size: 20, bold: true, color: { argb: 'FFFFFFFF' } };
   title.fill = fill('FF1D4ED8');
   title.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
@@ -151,9 +157,10 @@ export async function downloadHistoryExcel(data) {
   });
 
   const buffer = await workbook.xlsx.writeBuffer();
+  const fileBase = reportTitle.replace(/[^a-zA-Z0-9_\-]/g, '_');
   saveBlob(
     new Blob([buffer], { type: XLSX_TYPE }),
-    `Complete-Attendance-History-${stamp(data.generatedAt)}.xlsx`
+    `${fileBase}-${stamp(data.generatedAt)}.xlsx`
   );
 }
 
@@ -162,6 +169,10 @@ export async function downloadHistoryExcel(data) {
 export async function downloadHistoryPdf(data) {
   const { jsPDF } = await import('jspdf');
   const { default: autoTable } = await import('jspdf-autotable');
+
+  const reportTitle = data.label
+    ? `${data.label} Attendance`
+    : (data.classes?.length === 1 ? `${data.classes[0].className} Attendance` : TITLE);
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -178,9 +189,9 @@ export async function downloadHistoryPdf(data) {
   doc.rect(0, 0, pageWidth, 96, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(24);
+  doc.setFontSize(22);
   doc.setTextColor(255, 255, 255);
-  doc.text(TITLE, margin, 52);
+  doc.text(reportTitle, margin, 52);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
@@ -286,5 +297,6 @@ export async function downloadHistoryPdf(data) {
     doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 18, { align: 'right' });
   }
 
-  doc.save(`Complete-Attendance-History-${stamp(data.generatedAt)}.pdf`);
+  const fileBase = reportTitle.replace(/[^a-zA-Z0-9_\-]/g, '_');
+  doc.save(`${fileBase}-${stamp(data.generatedAt)}.pdf`);
 }
