@@ -6,6 +6,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { SystemProvider } from './context/SystemContext';
 import EmergencyLockdownOverlay from './components/EmergencyLockdownOverlay';
 import { ProtectedRoute, PublicRoute } from './components/RouteGuards';
+import Home from './pages/Home';
 import AuthForm from './pages/AuthForm';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -48,6 +49,7 @@ export default function App() {
           <SystemProvider>
             <EmergencyLockdownOverlay />
             <Routes>
+              <Route path="/" element={<Home />} />
               <Route path="/login" element={<PublicRoute><AuthForm mode="login" /></PublicRoute>} />
               <Route path="/register" element={<PublicRoute><AuthForm mode="register" /></PublicRoute>} />
               <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
