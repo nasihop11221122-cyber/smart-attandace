@@ -5,20 +5,16 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
-  useReducedMotion,
 } from 'framer-motion';
 import {
   ClipboardCheck,
   Smartphone,
   ArrowUpRight,
-  User,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 import AttendanceLogo3D from '../components/home/AttendanceLogo3D';
-import { LOGIN_ROUTE, ABOUT_LINK } from '../constants/routes';
-// Purani import line ki jagah:
 import BadgeLogo3D from '../components/home/BadgeLogo3D';
+import { LOGIN_ROUTE, ABOUT_LINK } from '../constants/routes';
 
 /* ==========================================================================
    CONSTANTS (Colors, Content, Animation Variants)
@@ -49,7 +45,7 @@ const CONTENT = {
       icon: ClipboardCheck,
       themeColor: '#3B4CCA',
       hoverBorder: 'hover:border-[#3B4CCA]',
-      hoverShadow: 'hover:shadow-[0_14px_32px_rgba(59,76,202,0.18)]',
+      hoverShadow: 'hover:shadow-[0_8px_25px_rgba(59,76,202,0.14)]',
       activeBadgeBg: 'bg-[#3B4CCA]',
       activeTextColor: 'group-hover:text-[#3B4CCA]',
       activePillBg: 'group-hover:bg-[#3B4CCA] group-hover:border-[#3B4CCA]',
@@ -62,7 +58,7 @@ const CONTENT = {
       icon: Smartphone,
       themeColor: '#14B8A6',
       hoverBorder: 'hover:border-[#14B8A6]',
-      hoverShadow: 'hover:shadow-[0_14px_32px_rgba(20,184,166,0.18)]',
+      hoverShadow: 'hover:shadow-[0_8px_25px_rgba(20,184,166,0.14)]',
       activeBadgeBg: 'bg-[#14B8A6]',
       activeTextColor: 'group-hover:text-[#14B8A6]',
       activePillBg: 'group-hover:bg-[#14B8A6] group-hover:border-[#14B8A6]',
@@ -77,90 +73,64 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
     },
   },
 };
 
 const wordRevealVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
+      duration: 0.45,
       ease: [0.16, 1, 0.3, 1],
     },
   },
 };
 
 const leftElementVariants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 14 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
 const rightCardVariants = {
-  hidden: { opacity: 0, x: 24 },
+  hidden: { opacity: 0, x: 20 },
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
 /* ==========================================================================
-   DYNAMIC 3D TILT BUTTON CARD COMPONENT
-   - Initially looks completely identical ("pehle ik jaise")
-   - On hover: Complete morphing with 3D perspective tilt, spotlight,
-     burst color, animated sheen, and synchronized 3D Three.js emblem reaction!
+   ULTRA-RESPONSIVE, ZERO-LAG 3D BUTTON CARD COMPONENT
+   - Instant hover & click feedback (<50ms response)
+   - Snappy spring tilt without frame drops
+   - High-contrast, clean modern aesthetic
    ========================================================================== */
 
 function InteractiveAttendanceCard({ card, onHoverStart, onHoverEnd, onClick }) {
   const cardRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
-  const shouldReduceMotion = useReducedMotion();
 
-  // Glass shine settings (Manual goes first, Online follows)
-  const glowRgb = card.id === 'manual' ? '59, 76, 202' : '20, 184, 166';
-  const order = card.id === 'manual' ? 0 : 1;
-  const shineDelay = 1.2 + order * 1.3;
-
-  // Ring-shaped mask so light shows only on the border area
-  const ringMask = {
-    WebkitMask:
-      'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-    WebkitMaskComposite: 'xor',
-    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-    maskComposite: 'exclude',
-  };
-
-  // Soft, gradual light tail (many stops = smooth fade, no hard edge)
-  const conic = `conic-gradient(from 0deg,
-    transparent 0deg,
-    transparent 170deg,
-    rgba(${glowRgb}, 0.06) 210deg,
-    rgba(${glowRgb}, 0.18) 250deg,
-    rgba(${glowRgb}, 0.38) 295deg,
-    rgba(${glowRgb}, 0.65) 330deg,
-    rgba(255,255,255,0.85) 352deg,
-    transparent 360deg)`;
-
-  // Framer-Motion 3D Tilt Spring System
+  // Ultra-snappy spring configuration (instant tracking, no lag)
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const springConfig = { damping: 20, stiffness: 280 };
+  const springConfig = { damping: 25, stiffness: 450 };
   const smoothMouseX = useSpring(mouseX, springConfig);
   const smoothMouseY = useSpring(mouseY, springConfig);
 
-  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], ['6deg', '-6deg']);
-  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], ['-6deg', '6deg']);
+  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], ['4deg', '-4deg']);
+  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], ['-4deg', '4deg']);
 
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
@@ -192,7 +162,7 @@ function InteractiveAttendanceCard({ card, onHoverStart, onHoverEnd, onClick }) 
   return (
     <motion.div
       style={{
-        perspective: 900,
+        perspective: 800,
         transformStyle: 'preserve-3d',
       }}
       className="relative w-full"
@@ -206,80 +176,21 @@ function InteractiveAttendanceCard({ card, onHoverStart, onHoverEnd, onClick }) 
           rotateX,
           rotateY,
         }}
-        whileHover={{ scale: 1.025, y: -3 }}
-        whileTap={{ scale: 0.97 }}
+        whileHover={{ scale: 1.018, y: -2 }}
+        whileTap={{ scale: 0.985, transition: { duration: 0.06 } }}
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={onClick}
-        className={`group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-2xl border border-[#E7E2D9] bg-white px-4 py-3 sm:px-5 sm:py-3.5 text-left shadow-[0_3px_12px_rgba(20,33,61,0.04),inset_0_1px_0_rgba(255,255,255,0.95)] transition-all duration-300 ${card.hoverBorder} ${card.hoverShadow} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B4CCA]`}
+        className={`group relative flex w-full cursor-pointer items-center justify-between overflow-hidden rounded-2xl border border-[#E7E2D9] bg-white px-4 py-3 sm:px-5 sm:py-3.5 text-left shadow-[0_2px_10px_rgba(20,33,61,0.04)] transition-colors duration-150 ease-out ${card.hoverBorder} ${card.hoverShadow} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B4CCA]`}
       >
-        {/* Border light 1: thin border + small inner edge glow, slow smooth breathing */}
-        {!shouldReduceMotion && (
-          <motion.span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 rounded-2xl"
-            animate={{
-              boxShadow: [
-                `inset 0 0 0 1px rgba(${glowRgb}, 0.22), inset 0 0 5px rgba(${glowRgb}, 0.06)`,
-                `inset 0 0 0 1px rgba(${glowRgb}, 0.55), inset 0 0 10px rgba(${glowRgb}, 0.16)`,
-              ],
-            }}
-            transition={{
-              duration: 2.6,
-              ease: [0.45, 0, 0.55, 1],
-              repeat: Infinity,
-              repeatType: 'mirror',
-              delay: shineDelay,
-            }}
-          />
-        )}
-
-        {/* Border light 2a: narrow soft glow that travels around the border */}
-        {!shouldReduceMotion && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
-            style={{ padding: '3px', ...ringMask }}
-          >
-            <motion.span
-              className="absolute left-1/2 top-1/2 block aspect-square w-[220%]"
-              style={{ x: '-50%', y: '-50%', background: conic, filter: 'blur(3px)', opacity: 0.5 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 4, ease: 'linear', repeat: Infinity, delay: shineDelay * 0.5 }}
-            />
-          </span>
-        )}
-
-        {/* Border light 2b: very thin line that travels around the border */}
-        {!shouldReduceMotion && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
-            style={{ padding: '1px', ...ringMask }}
-          >
-            <motion.span
-              className="absolute left-1/2 top-1/2 block aspect-square w-[220%]"
-              style={{ x: '-50%', y: '-50%', background: conic, opacity: 0.75 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 4, ease: 'linear', repeat: Infinity, delay: shineDelay * 0.5 }}
-            />
-          </span>
-        )}
-
-        {/* Glass top highlight (static, very subtle) */}
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-2xl bg-gradient-to-b from-white/70 to-transparent"
-        />
-
-        {/* Dynamic Cursor Spotlight Following Exact Mouse Coordinates */}
+        {/* Dynamic Cursor Spotlight (Hardware accelerated, instant response) */}
         {isHovered && (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -inset-px rounded-2xl opacity-100 transition-opacity duration-300"
+            className="pointer-events-none absolute -inset-px rounded-2xl opacity-100 transition-opacity duration-150"
             style={{
-              background: `radial-gradient(160px circle at ${cursorPos.x}px ${cursorPos.y}px, ${card.themeColor}16, transparent 75%)`,
+              background: `radial-gradient(150px circle at ${cursorPos.x}px ${cursorPos.y}px, ${card.themeColor}14, transparent 75%)`,
             }}
           />
         )}
@@ -287,48 +198,30 @@ function InteractiveAttendanceCard({ card, onHoverStart, onHoverEnd, onClick }) 
         {/* Hover Sweeping Light Sheen */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-500 ease-out group-hover:translate-x-full"
         />
-
-        {/* Thin glass shine streak: smooth sweep across the button, every few seconds */}
-        {!shouldReduceMotion && (
-          <motion.span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 w-10"
-            style={{
-              skewX: -20,
-              background: `linear-gradient(90deg, transparent 0%, rgba(${glowRgb}, 0.06) 30%, rgba(255,255,255,0.75) 50%, rgba(${glowRgb}, 0.06) 70%, transparent 100%)`,
-              filter: 'blur(1px)',
-            }}
-            initial={{ x: '-200%' }}
-            animate={{ x: '1100%' }}
-            transition={{
-              duration: 1.8,
-              ease: [0.4, 0, 0.2, 1],
-              repeat: Infinity,
-              repeatDelay: 2.4,
-              delay: shineDelay,
-            }}
-          />
-        )}
 
         {/* Left Side: Icon Box + Clean Typography */}
         <div className="relative z-10 flex items-center gap-3.5 sm:gap-4">
           <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#E7E2D9] bg-[#14213D]/[0.04] text-[#14213D]/75 shadow-sm transition-all duration-300 group-hover:border-transparent ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#E7E2D9] bg-[#14213D]/[0.04] text-[#14213D]/75 shadow-xs transition-all duration-150 ease-out group-hover:border-transparent ${
               isHovered
-                ? `${card.activeBadgeBg} text-white scale-110 shadow-md ${
-                    card.id === 'manual' ? 'rotate-3' : '-rotate-3'
+                ? `${card.activeBadgeBg} text-white scale-105 shadow-sm ${
+                    card.id === 'manual' ? 'rotate-2' : '-rotate-2'
                   }`
                 : ''
             }`}
           >
-            <IconComponent className="h-5 w-5 sm:h-5.5 sm:w-5.5 transition-transform duration-300" strokeWidth={2.2} />
+            <IconComponent
+              className="h-5 w-5 sm:h-5.5 sm:w-5.5 transition-transform duration-150"
+              strokeWidth={2.2}
+            />
           </div>
 
-          {/* Text: always clear, no effects */}
           <div>
-            <h2 className="text-sm sm:text-base font-bold tracking-tight text-[#14213D]">
+            <h2
+              className={`text-sm sm:text-base font-bold tracking-tight text-[#14213D] transition-colors duration-150 ${card.activeTextColor}`}
+            >
               {card.title}
             </h2>
             <p className="mt-0.5 text-[11px] sm:text-xs text-[#5B6475] leading-tight">
@@ -340,10 +233,10 @@ function InteractiveAttendanceCard({ card, onHoverStart, onHoverEnd, onClick }) 
         {/* Right Side: Sleek Interactive Arrow Pill */}
         <div className="relative z-10 flex items-center pl-2">
           <div
-            className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-[#E7E2D9] bg-[#FAF8F4] text-[#5B6475] shadow-xs transition-all duration-300 ${card.activePillBg} group-hover:text-white group-hover:shadow-sm`}
+            className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-[#E7E2D9] bg-[#FAF8F4] text-[#5B6475] shadow-xs transition-all duration-150 ease-out ${card.activePillBg} group-hover:text-white group-hover:shadow-sm`}
           >
             <ChevronRight
-              className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5"
+              className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5"
               strokeWidth={2.5}
             />
           </div>
@@ -359,7 +252,6 @@ function InteractiveAttendanceCard({ card, onHoverStart, onHoverEnd, onClick }) 
 
 export default function Home() {
   const navigate = useNavigate();
-  const shouldReduceMotion = useReducedMotion();
   const [hoveredButton, setHoveredButton] = useState(null);
 
   const handleCardClick = () => {
@@ -384,19 +276,23 @@ export default function Home() {
         {/* LEFT COLUMN: Pill, Heading, Description, Picture, About Us    */}
         {/* ============================================================== */}
         <section className="order-2 flex flex-col justify-between pt-4 lg:order-1 lg:col-span-6 lg:h-full lg:pt-0 lg:pr-8 xl:pr-12">
-          {/* Top: Solid White Pill with Pulsing Green Dot */}
+          {/* Top: 3D Badge Pill */}
           <motion.div variants={leftElementVariants} className="flex items-center">
-  <div className="inline-flex items-center gap-3">
-    <BadgeLogo3D size={72} />
-    <span className="text-[13px] font-extrabold tracking-wider text-[#14213D] uppercase">
-      {CONTENT.badge}
-    </span>
-  </div>
-</motion.div>
+            <div className="inline-flex items-center gap-3">
+              <BadgeLogo3D size={72} />
+              <div className="flex flex-col">
+                <span className="text-xs font-extrabold tracking-wider text-[#14213D] uppercase">
+                  Smart Attendance
+                </span>
+                <span className="text-[10px] font-medium text-[#5B6475]">
+                  Next-Gen Presence Portal
+                </span>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Middle: Staggered Heading + Description + Picture Frame */}
           <div className="my-auto py-6 lg:py-2">
-            {/* Heading in near-black ink with one solid indigo accent */}
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl xl:text-5.5xl">
               <span className="inline-flex flex-wrap gap-x-2.5 gap-y-1">
                 {CONTENT.headingWords.map((word, index) => (
@@ -415,7 +311,6 @@ export default function Home() {
               </span>
             </h1>
 
-            {/* Short Supporting Line in Muted Gray */}
             <motion.p
               variants={leftElementVariants}
               className="mt-3.5 max-w-lg text-sm leading-relaxed text-[#5B6475] sm:text-base"
@@ -428,15 +323,10 @@ export default function Home() {
               variants={leftElementVariants}
               className="mt-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5"
             >
-              {/* Circular Portrait Frame */}
               <motion.div
-                animate={
-                  shouldReduceMotion
-                    ? {}
-                    : {
-                      y: [-5, 5, -5],
-                    }
-                }
+                animate={{
+                  y: [-5, 5, -5],
+                }}
                 transition={{
                   duration: 5,
                   repeat: Infinity,
@@ -444,9 +334,6 @@ export default function Home() {
                 }}
                 className="group relative flex items-center justify-center"
               >
-               
-
-                {/* Portrait Container: Solid White with soft luxury shadow & perfect framing */}
                 {/* Thin Rotating Dashed Ring */}
                 <div
                   aria-hidden="true"
@@ -454,13 +341,13 @@ export default function Home() {
                   style={{ animationDuration: '26s' }}
                 />
 
-                {/* Portrait Container: Solid White with soft luxury shadow & perfect framing */}
+                {/* Portrait Container */}
                 <div className="relative flex h-28 w-28 sm:h-32 sm:w-32 md:h-36 md:w-36 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#FAF8F4] shadow-[0_10px_28px_rgba(20,33,61,0.12)] ring-1 ring-[#E7E2D9]">
                   <img
                     src="https://res.cloudinary.com/gp4dzet9/image/upload/v1789836406/IMG_0578.png"
                     alt="Founder Portrait"
                     loading="eager"
-                    className="h-full w-full object-cover object-[50%_12%] transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                    className="h-full w-full object-cover object-[50%_12%] transition-transform duration-300 ease-out group-hover:scale-[1.03]"
                   />
                 </div>
               </motion.div>
@@ -475,11 +362,11 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="group mt-1.5 inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#E7E2D9] bg-white px-5 py-2 text-xs font-bold tracking-wider text-[#14213D] uppercase shadow-xs transition-colors duration-300 hover:bg-[#14213D] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B4CCA]"
+                  whileTap={{ scale: 0.98 }}
+                  className="group mt-1.5 inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#E7E2D9] bg-white px-5 py-2 text-xs font-bold tracking-wider text-[#14213D] uppercase shadow-xs transition-colors duration-150 hover:bg-[#14213D] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B4CCA]"
                 >
                   <span>{CONTENT.aboutLabel}</span>
-                  <ArrowUpRight className="h-3.5 w-3.5 text-[#3B4CCA] transition-colors duration-300 group-hover:text-white" />
+                  <ArrowUpRight className="h-3.5 w-3.5 text-[#3B4CCA] transition-colors duration-150 group-hover:text-white" />
                 </motion.a>
               </div>
             </motion.div>
@@ -499,7 +386,7 @@ export default function Home() {
         {/* ============================================================== */}
         <section className="order-1 flex flex-col items-center justify-center lg:order-2 lg:col-span-6 lg:h-full lg:pl-6 xl:pl-10">
           <div className="flex w-full max-w-md flex-col items-center">
-            {/* 3D Three.js Logo Canvas (Synchronized reaction to button hover) */}
+            {/* 3D Three.js Logo Canvas */}
             <motion.div
               variants={rightCardVariants}
               className="relative flex items-center justify-center"
@@ -509,7 +396,7 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* Exactly Two Big SOLID Cards with 3D Tilt & Complete Hover Morphing */}
+            {/* Exactly Two Big SOLID Cards with Snappy, Instant Response */}
             <div className="order-3 mt-3 flex w-full flex-col gap-3 sm:mt-4 sm:gap-3.5 lg:order-none">
               {CONTENT.cards.map((card) => (
                 <InteractiveAttendanceCard
