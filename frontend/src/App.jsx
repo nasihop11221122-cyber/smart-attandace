@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { SystemProvider } from './context/SystemContext';
 import EmergencyLockdownOverlay from './components/EmergencyLockdownOverlay';
+import PwaInstallPrompt from './components/pwa/PwaInstallPrompt';
 import { ProtectedRoute, PublicRoute } from './components/RouteGuards';
 import Home from './pages/Home';
 import AuthForm from './pages/AuthForm';
@@ -48,6 +49,7 @@ export default function App() {
         <LanguageProvider>
           <SystemProvider>
             <EmergencyLockdownOverlay />
+            <PwaInstallPrompt />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<PublicRoute><AuthForm mode="login" /></PublicRoute>} />
