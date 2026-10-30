@@ -2,43 +2,71 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Share2, PlusSquare, Smartphone, CheckCircle2 } from 'lucide-react';
 
+const PWA_INSTALLED_KEY = 'smart_attendance_pwa_installed';
+const PWA_DISMISSED_KEY = 'smart_attendance_pwa_dismissed';
+
 /**
  * PwaInstallPrompt
  * 
  * Production-ready PWA installation controller:
- * 1. Checks if already running in standalone mode (hides automatically if installed).
- * 2. On Android & Desktop Chrome/Edge: captures `beforeinstallprompt` and triggers native installation dialog.
- * 3. On iPhone/iOS Safari: displays an intuitive, high-polish step-by-step installation guide.
- * 4. Preserves 100% of website UI and functionality.
+ * - Permanent suppression once installed (stored in localStorage).
+ * - Immediate suppression when launched in standalone mode.
+ * - Suppressed via native navigator.getInstalledRelatedApps() when available.
+ * - Listens for appinstalled and accepted installation prompts.
+ * - Zero repeated nagging for users who already have the app.
  */
 export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [showIOSModal, setShowIOSModal] = useState(false);
   const [showDesktopHelpModal, setShowDesktopHelpModal] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // 1. Check if already installed & running in standalone mode
+    // 1. Check permanent storage: if already recorded as installed, do not show
+    const alreadyInstalledInStorage = localStorage.getItem(PWA_INSTALLED_KEY) === 'true';
+    if (alreadyInstalledInStorage) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // 2. Check if running in standalone mode (installed app opened)
     const isStandaloneMode =
       window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches ||
       window.navigator.standalone === true ||
       document.referrer.includes('android-app://');
 
     if (isStandaloneMode) {
-      setIsStandalone(true);
+      // User is inside the installed app, mark permanently as installed
+      localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+      setIsInstalled(true);
       return;
     }
 
-    // Check if dismissed previously in this session
-    const wasDismissed = sessionStorage.getItem('pwa_prompt_dismissed') === 'true';
-    if (wasDismissed) {
-      setDismissed(true);
+    // 3. Check dismissed flag (suppress if dismissed recently)
+    const dismissedUntil = localStorage.getItem(PWA_DISMISSED_KEY);
+    const isDismissed = dismissedUntil && Number(dismissedUntil) > Date.now();
+    if (isDismissed) {
+      return;
     }
 
-    // 2. Detect iOS / iPadOS
+    // 4. Query navigator.getInstalledRelatedApps() (supported in modern Chrome / Android)
+    if (typeof navigator !== 'undefined' && 'getInstalledRelatedApps' in navigator) {
+      navigator.getInstalledRelatedApps()
+        .then((relatedApps) => {
+          if (relatedApps && relatedApps.length > 0) {
+            localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+            setIsInstalled(true);
+            setShowPrompt(false);
+          }
+        })
+        .catch(() => {});
+    }
+
+    // 5. Detect iOS / iPadOS
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIOSDevice =
       /iphone|ipad|ipod/.test(userAgent) ||
@@ -46,45 +74,48 @@ export default function PwaInstallPrompt() {
 
     setIsIOS(isIOSDevice);
 
-    // 3. Listen for Android / Chromium `beforeinstallprompt`
+    // 6. Listen for Android / Chromium `beforeinstallprompt`
+    // (Chromium natively will NOT fire this event if the app is already installed)
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      if (!wasDismissed) {
+      if (!isDismissed && !alreadyInstalledInStorage) {
         setShowPrompt(true);
       }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // 4. Listen for successful installation
+    // 7. Listen for successful installation event
     const handleAppInstalled = () => {
+      localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+      setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
-      setIsStandalone(true);
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // If on iOS or supported browsers, show prompt after a gentle 1.2s delay
-    const timer = setTimeout(() => {
-      if (!wasDismissed && !isStandaloneMode) {
+    // For iOS only: show prompt after gentle delay (since iOS doesn't have beforeinstallprompt)
+    let iosTimer = null;
+    if (isIOSDevice && !alreadyInstalledInStorage && !isDismissed && !isStandaloneMode) {
+      iosTimer = setTimeout(() => {
         setShowPrompt(true);
-      }
-    }, 1200);
+      }, 1500);
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
-      clearTimeout(timer);
+      if (iosTimer) clearTimeout(iosTimer);
     };
   }, []);
 
-  // Dismiss banner for current session
+  // Dismiss button handler (remembers dismissal for 14 days)
   const handleDismiss = () => {
     setShowPrompt(false);
-    setDismissed(true);
-    sessionStorage.setItem('pwa_prompt_dismissed', 'true');
+    const fourteenDaysLater = Date.now() + 14 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(PWA_DISMISSED_KEY, String(fourteenDaysLater));
   };
 
   // Trigger Install flow based on platform
@@ -99,6 +130,9 @@ export default function PwaInstallPrompt() {
         await deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
         if (choice && choice.outcome === 'accepted') {
+          // Permanently mark as installed
+          localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+          setIsInstalled(true);
           setShowPrompt(false);
           setDeferredPrompt(null);
         }
@@ -106,25 +140,38 @@ export default function PwaInstallPrompt() {
         console.warn('Installation error:', err);
       }
     } else {
-      // In case native prompt hasn't fired or on desktop without direct prompt
       setShowDesktopHelpModal(true);
     }
   };
 
-  // If already standalone or user dismissed, don't show floating button
-  if (isStandalone || dismissed || !showPrompt) {
+  // Handler when user confirms iOS installation or completes it
+  const handleIOSConfirmed = () => {
+    localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+    setIsInstalled(true);
+    setShowPrompt(false);
+    setShowIOSModal(false);
+  };
+
+  // If already installed, never render anything
+  if (isInstalled || !showPrompt) {
     return (
       <>
-        {/* Render iOS Modal if active */}
-        <IOSInstallModal isOpen={showIOSModal} onClose={() => setShowIOSModal(false)} />
-        <DesktopInstallModal isOpen={showDesktopHelpModal} onClose={() => setShowDesktopHelpModal(false)} />
+        <IOSInstallModal
+          isOpen={showIOSModal}
+          onClose={() => setShowIOSModal(false)}
+          onConfirm={handleIOSConfirmed}
+        />
+        <DesktopInstallModal
+          isOpen={showDesktopHelpModal}
+          onClose={() => setShowDesktopHelpModal(false)}
+        />
       </>
     );
   }
 
   return (
     <>
-      {/* Floating Modern Pill: "Download App" / "Install App" */}
+      {/* Floating Modern Pill: "Install App" / "Download App" */}
       <aside
         aria-label="Install Smart Attendance Application"
         className="fixed bottom-5 right-5 z-50 flex items-center justify-end"
@@ -182,10 +229,17 @@ export default function PwaInstallPrompt() {
       </aside>
 
       {/* iOS Step-by-Step Guide Modal */}
-      <IOSInstallModal isOpen={showIOSModal} onClose={() => setShowIOSModal(false)} />
+      <IOSInstallModal
+        isOpen={showIOSModal}
+        onClose={() => setShowIOSModal(false)}
+        onConfirm={handleIOSConfirmed}
+      />
 
       {/* Desktop / Manual Browser Guidance Modal */}
-      <DesktopInstallModal isOpen={showDesktopHelpModal} onClose={() => setShowDesktopHelpModal(false)} />
+      <DesktopInstallModal
+        isOpen={showDesktopHelpModal}
+        onClose={() => setShowDesktopHelpModal(false)}
+      />
     </>
   );
 }
@@ -193,7 +247,7 @@ export default function PwaInstallPrompt() {
 /**
  * iOS Installation Instructions Modal
  */
-function IOSInstallModal({ isOpen, onClose }) {
+function IOSInstallModal({ isOpen, onClose, onConfirm }) {
   if (!isOpen) return null;
 
   return (
@@ -247,7 +301,7 @@ function IOSInstallModal({ isOpen, onClose }) {
           </div>
 
           {/* Steps List */}
-          <div className="mt-5 space-y-3.5">
+          <div className="mt-5 space-y-3">
             {/* Step 1 */}
             <div className="flex items-start gap-3 rounded-xl border border-[#E7E2D9]/70 bg-[#FAF8F4] p-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3B4CCA] text-xs font-bold text-white">
@@ -299,15 +353,15 @@ function IOSInstallModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          {/* Action Close */}
-          <div className="mt-6 flex justify-end">
+          {/* Action Confirmation Button */}
+          <div className="mt-5 flex gap-2">
             <button
               type="button"
-              onClick={onClose}
+              onClick={onConfirm}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3B4CCA] py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#2F3DAA]"
             >
               <CheckCircle2 className="h-4 w-4" />
-              <span>Got It, Thank You!</span>
+              <span>I've Added It to My Home Screen</span>
             </button>
           </div>
         </motion.div>
@@ -317,7 +371,7 @@ function IOSInstallModal({ isOpen, onClose }) {
 }
 
 /**
- * Desktop Installation Guidance Modal (fallback when native prompt hasn't triggered)
+ * Desktop Installation Guidance Modal
  */
 function DesktopInstallModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -377,4 +431,3 @@ function DesktopInstallModal({ isOpen, onClose }) {
     </AnimatePresence>
   );
 }
-
