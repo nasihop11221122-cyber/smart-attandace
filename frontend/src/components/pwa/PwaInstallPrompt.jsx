@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Share2, PlusSquare, Smartphone, CheckCircle2 } from 'lucide-react';
 
-const PWA_INSTALLED_KEY = 'smart_attendance_pwa_installed';
-const PWA_DISMISSED_KEY = 'smart_attendance_pwa_dismissed';
+const STORAGE_INSTALLED = 'smart_attend_installed_v1';
+const STORAGE_DISMISSED = 'smart_attend_dismissed_session';
 
 /**
  * PwaInstallPrompt
  * 
- * Production-ready PWA installation controller:
- * - Permanent suppression once installed (stored in localStorage).
- * - Immediate suppression when launched in standalone mode.
- * - Suppressed via native navigator.getInstalledRelatedApps() when available.
- * - Listens for appinstalled and accepted installation prompts.
- * - Zero repeated nagging for users who already have the app.
+ * Perfect PWA installation controller:
+ * 1. ALWAYS shows on first visit on Android, iPhone/iOS, and Desktop.
+ * 2. Once the app is installed (or launched in standalone mode), it NEVER shows again.
+ * 3. Clicking 'X' dismisses only for the active session (does not permanently lock out).
+ * 4. Preserves all existing design and functionality.
  */
 export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -24,14 +23,13 @@ export default function PwaInstallPrompt() {
   const [showDesktopHelpModal, setShowDesktopHelpModal] = useState(false);
 
   useEffect(() => {
-    // 1. Check permanent storage: if already recorded as installed, do not show
-    const alreadyInstalledInStorage = localStorage.getItem(PWA_INSTALLED_KEY) === 'true';
-    if (alreadyInstalledInStorage) {
-      setIsInstalled(true);
-      return;
-    }
+    // Clean up any legacy lock keys from previous versions
+    try {
+      localStorage.removeItem('smart_attendance_pwa_dismissed');
+      localStorage.removeItem('pwa_prompt_dismissed');
+    } catch (_) {}
 
-    // 2. Check if running in standalone mode (installed app opened)
+    // 1. Check if running in standalone mode (already installed app is open)
     const isStandaloneMode =
       window.matchMedia('(display-mode: standalone)').matches ||
       window.matchMedia('(display-mode: fullscreen)').matches ||
@@ -40,33 +38,30 @@ export default function PwaInstallPrompt() {
       document.referrer.includes('android-app://');
 
     if (isStandaloneMode) {
-      // User is inside the installed app, mark permanently as installed
-      localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+      // User is inside the installed app: mark permanently as installed and NEVER show
+      try {
+        localStorage.setItem(STORAGE_INSTALLED, 'true');
+      } catch (_) {}
       setIsInstalled(true);
       return;
     }
 
-    // 3. Check dismissed flag (suppress if dismissed recently)
-    const dismissedUntil = localStorage.getItem(PWA_DISMISSED_KEY);
-    const isDismissed = dismissedUntil && Number(dismissedUntil) > Date.now();
-    if (isDismissed) {
-      return;
-    }
+    // 2. Check if user already installed the app on this device
+    try {
+      if (localStorage.getItem(STORAGE_INSTALLED) === 'true') {
+        setIsInstalled(true);
+        return;
+      }
+    } catch (_) {}
 
-    // 4. Query navigator.getInstalledRelatedApps() (supported in modern Chrome / Android)
-    if (typeof navigator !== 'undefined' && 'getInstalledRelatedApps' in navigator) {
-      navigator.getInstalledRelatedApps()
-        .then((relatedApps) => {
-          if (relatedApps && relatedApps.length > 0) {
-            localStorage.setItem(PWA_INSTALLED_KEY, 'true');
-            setIsInstalled(true);
-            setShowPrompt(false);
-          }
-        })
-        .catch(() => {});
-    }
+    // 3. Check if user dismissed for this active session
+    try {
+      if (sessionStorage.getItem(STORAGE_DISMISSED) === 'true') {
+        return;
+      }
+    } catch (_) {}
 
-    // 5. Detect iOS / iPadOS
+    // 4. Detect iOS / iPadOS
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIOSDevice =
       /iphone|ipad|ipod/.test(userAgent) ||
@@ -74,21 +69,19 @@ export default function PwaInstallPrompt() {
 
     setIsIOS(isIOSDevice);
 
-    // 6. Listen for Android / Chromium `beforeinstallprompt`
-    // (Chromium natively will NOT fire this event if the app is already installed)
+    // 5. Listen for Android / Chromium `beforeinstallprompt`
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      if (!isDismissed && !alreadyInstalledInStorage) {
-        setShowPrompt(true);
-      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // 7. Listen for successful installation event
+    // 6. Listen for successful installation event
     const handleAppInstalled = () => {
-      localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+      try {
+        localStorage.setItem(STORAGE_INSTALLED, 'true');
+      } catch (_) {}
       setIsInstalled(true);
       setShowPrompt(false);
       setDeferredPrompt(null);
@@ -96,26 +89,39 @@ export default function PwaInstallPrompt() {
 
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // For iOS only: show prompt after gentle delay (since iOS doesn't have beforeinstallprompt)
-    let iosTimer = null;
-    if (isIOSDevice && !alreadyInstalledInStorage && !isDismissed && !isStandaloneMode) {
-      iosTimer = setTimeout(() => {
-        setShowPrompt(true);
-      }, 1500);
+    // 7. Check if modern browser already detects installed related apps
+    if (typeof navigator !== 'undefined' && 'getInstalledRelatedApps' in navigator) {
+      navigator.getInstalledRelatedApps()
+        .then((apps) => {
+          if (apps && apps.length > 0) {
+            try {
+              localStorage.setItem(STORAGE_INSTALLED, 'true');
+            } catch (_) {}
+            setIsInstalled(true);
+            setShowPrompt(false);
+          }
+        })
+        .catch(() => {});
     }
+
+    // 8. RELIABLE DISPLAY TRIGGER: Show prompt after 1 second for first-time visitors
+    const timer = setTimeout(() => {
+      setShowPrompt(true);
+    }, 1000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
-      if (iosTimer) clearTimeout(iosTimer);
+      clearTimeout(timer);
     };
   }, []);
 
-  // Dismiss button handler (remembers dismissal for 14 days)
+  // Dismiss button handler (dismisses only for current session)
   const handleDismiss = () => {
     setShowPrompt(false);
-    const fourteenDaysLater = Date.now() + 14 * 24 * 60 * 60 * 1000;
-    localStorage.setItem(PWA_DISMISSED_KEY, String(fourteenDaysLater));
+    try {
+      sessionStorage.setItem(STORAGE_DISMISSED, 'true');
+    } catch (_) {}
   };
 
   // Trigger Install flow based on platform
@@ -130,23 +136,27 @@ export default function PwaInstallPrompt() {
         await deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
         if (choice && choice.outcome === 'accepted') {
-          // Permanently mark as installed
-          localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+          // Permanently mark as installed so it never shows again
+          try {
+            localStorage.setItem(STORAGE_INSTALLED, 'true');
+          } catch (_) {}
           setIsInstalled(true);
           setShowPrompt(false);
           setDeferredPrompt(null);
         }
       } catch (err) {
-        console.warn('Installation error:', err);
+        console.warn('Installation prompt error:', err);
       }
     } else {
       setShowDesktopHelpModal(true);
     }
   };
 
-  // Handler when user confirms iOS installation or completes it
+  // Handler when user confirms iOS installation
   const handleIOSConfirmed = () => {
-    localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+    try {
+      localStorage.setItem(STORAGE_INSTALLED, 'true');
+    } catch (_) {}
     setIsInstalled(true);
     setShowPrompt(false);
     setShowIOSModal(false);
@@ -210,7 +220,7 @@ export default function PwaInstallPrompt() {
           <button
             type="button"
             onClick={handleInstallClick}
-            className="flex items-center gap-1.5 rounded-xl bg-[#3B4CCA] px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-all duration-150 hover:bg-[#2F3DAA] hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B4CCA]"
+            className="flex items-center gap-1.5 rounded-xl bg-[#3B4CCA] px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-all duration-150 hover:bg-[#2F3DAA] hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B4CCA] cursor-pointer"
           >
             <Download className="h-3.5 w-3.5" strokeWidth={2.5} />
             <span>Install App</span>
@@ -221,7 +231,7 @@ export default function PwaInstallPrompt() {
             type="button"
             onClick={handleDismiss}
             aria-label="Dismiss install banner"
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#5B6475] transition-colors hover:bg-[#14213D]/10 hover:text-[#14213D]"
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[#5B6475] transition-colors hover:bg-[#14213D]/10 hover:text-[#14213D] cursor-pointer"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -294,7 +304,7 @@ function IOSInstallModal({ isOpen, onClose, onConfirm }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-[#5B6475] transition-colors hover:bg-[#14213D]/10 hover:text-[#14213D]"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[#5B6475] transition-colors hover:bg-[#14213D]/10 hover:text-[#14213D] cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -358,7 +368,7 @@ function IOSInstallModal({ isOpen, onClose, onConfirm }) {
             <button
               type="button"
               onClick={onConfirm}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3B4CCA] py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#2F3DAA]"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3B4CCA] py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#2F3DAA] cursor-pointer"
             >
               <CheckCircle2 className="h-4 w-4" />
               <span>I've Added It to My Home Screen</span>
@@ -409,7 +419,7 @@ function DesktopInstallModal({ isOpen, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-[#5B6475] hover:bg-[#14213D]/10"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[#5B6475] hover:bg-[#14213D]/10 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
@@ -422,7 +432,7 @@ function DesktopInstallModal({ isOpen, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="mt-5 w-full rounded-xl bg-[#3B4CCA] py-2 text-xs font-bold text-white transition-colors hover:bg-[#2F3DAA]"
+            className="mt-5 w-full rounded-xl bg-[#3B4CCA] py-2 text-xs font-bold text-white transition-colors hover:bg-[#2F3DAA] cursor-pointer"
           >
             Understood
           </button>
