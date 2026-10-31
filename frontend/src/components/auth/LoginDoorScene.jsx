@@ -6,47 +6,47 @@ import * as THREE from 'three';
    ========================================================================== */
 
 /**
- * Procedural Architectural Walnut Door Texture
- * Rich wood grain with growth rings, fine fibers, and natural tone shifts.
+ * Procedural Soft Light Cream (#FFF1DC) Architectural Door Texture
+ * Smooth satin lacquer finish with delicate micro-grain and warm illumination.
  */
-function createArchitecturalWoodTexture() {
+function createSoftCreamDoorTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 1024;
   const ctx = canvas.getContext('2d');
 
-  // Base rich walnut/mahogany gradient
+  // Base soft light cream gradient (#FFF1DC)
   const bgGrad = ctx.createLinearGradient(0, 0, 512, 1024);
-  bgGrad.addColorStop(0.0, '#3E2314');
-  bgGrad.addColorStop(0.35, '#4B2A18');
-  bgGrad.addColorStop(0.7, '#381E11');
-  bgGrad.addColorStop(1.0, '#2D170C');
+  bgGrad.addColorStop(0.0, '#FFF7EC');
+  bgGrad.addColorStop(0.35, '#FFF1DC');
+  bgGrad.addColorStop(0.7, '#FCECD5');
+  bgGrad.addColorStop(1.0, '#F6E5CC');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, 512, 1024);
 
-  // Vertical wood grain lines and growth fibers
+  // Delicate satin lacquer micro-grain lines
   ctx.lineWidth = 1;
-  for (let i = 0; i < 480; i++) {
+  for (let i = 0; i < 360; i++) {
     const x = Math.random() * 512;
-    const alpha = 0.05 + Math.random() * 0.12;
-    ctx.strokeStyle = Math.random() > 0.45 
-      ? `rgba(26, 13, 7, ${alpha})` 
-      : `rgba(110, 68, 42, ${alpha * 0.75})`;
+    const alpha = 0.02 + Math.random() * 0.04;
+    ctx.strokeStyle = Math.random() > 0.5 
+      ? `rgba(255, 255, 255, ${alpha * 1.6})` 
+      : `rgba(215, 190, 155, ${alpha})`;
 
     ctx.beginPath();
     ctx.moveTo(x, 0);
-    const wobble1 = x + (Math.random() - 0.5) * 18;
-    const wobble2 = x + (Math.random() - 0.5) * 18;
-    ctx.bezierCurveTo(wobble1, 340, wobble2, 680, x + (Math.random() - 0.5) * 10, 1024);
+    const wobble1 = x + (Math.random() - 0.5) * 10;
+    const wobble2 = x + (Math.random() - 0.5) * 10;
+    ctx.bezierCurveTo(wobble1, 340, wobble2, 680, x + (Math.random() - 0.5) * 6, 1024);
     ctx.stroke();
   }
 
-  // Subtle natural wood pores & grain flecks
-  ctx.fillStyle = 'rgba(20, 10, 5, 0.14)';
-  for (let p = 0; p < 800; p++) {
+  // Soft satin highlight flecks
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  for (let p = 0; p < 400; p++) {
     const px = Math.random() * 512;
     const py = Math.random() * 1024;
-    ctx.fillRect(px, py, 1, 3 + Math.random() * 5);
+    ctx.fillRect(px, py, 1, 2 + Math.random() * 3);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -174,13 +174,32 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xfaf8f4); // Academic campus light backdrop
 
-    const isMobile = width < 768;
-    const isLargeScreen = width >= 1024;
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 50);
+    const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 50);
 
-    // Initial camera position
-    const baseCameraZ = isMobile ? 5.6 : 4.4;
-    camera.position.set(0, 0.15, baseCameraZ);
+    /**
+     * Compute camera distance Z so the door is always 100% visible,
+     * perfectly centered horizontally and vertically, never covers the entire screen,
+     * never gets cropped, and maintains generous, elegant spacing on all 4 sides
+     * across every resolution (desktop, laptop, tablet, mobile).
+     */
+    const computeResponsiveZ = (aspectRatio) => {
+      const vFovRad = (camera.fov * Math.PI) / 180;
+      // Target coverage: Door occupies a grand, prominent ~85% of the viewport,
+      // looking bold and large while maintaining clean ~7.5% margins around all four sides.
+      const targetCoverage = 0.85;
+      const boundingHeight = 2.75; // Total door height with frame
+      const boundingWidth = 1.45;  // Total door width with frame
+
+      const zByHeight = boundingHeight / (2 * Math.tan(vFovRad / 2) * targetCoverage);
+      const zByWidth = boundingWidth / (2 * Math.tan(vFovRad / 2) * aspectRatio * targetCoverage);
+
+      return Math.max(zByHeight, zByWidth);
+    };
+
+    // Position camera perfectly centered horizontally (x = 0) and vertically (y = 0.06)
+    const initialZ = computeResponsiveZ(width / height);
+    camera.position.set(0, 0.06, initialZ);
+    camera.lookAt(0, 0.06, 0);
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -226,16 +245,18 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
     scene.add(interiorPointLight);
 
     // 3. Materials
-    const woodTexture = createArchitecturalWoodTexture();
+    const doorTexture = createSoftCreamDoorTexture();
     const doorMaterial = new THREE.MeshStandardMaterial({
-      map: woodTexture,
-      roughness: 0.42,
-      metalness: 0.05,
+      color: 0xfff1dc, // Soft, light cream tone (#FFF1DC)
+      map: doorTexture,
+      roughness: 0.38,
+      metalness: 0.02,
     });
 
+    // Frame has the same warm cream tone family, slightly deeper (#EBD7BF) for subtle architectural contrast
     const frameWoodMaterial = new THREE.MeshStandardMaterial({
-      color: 0x2b170c,
-      roughness: 0.5,
+      color: 0xebd7bf, // Rich architectural cream casing
+      roughness: 0.44,
       metalness: 0.04,
     });
 
@@ -252,38 +273,38 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
     });
 
     const wallMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf5f2eb,
-      roughness: 0.9,
+      color: 0xfaf8f4, // Seamlessly matches page background with zero visible gap
+      roughness: 0.95,
       metalness: 0.0,
     });
 
     const floorMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe6ded1,
-      roughness: 0.65,
+      color: 0xf2ece1,
+      roughness: 0.7,
       metalness: 0.02,
     });
 
-    // 4. Floor Surface & Wall Architecture
-    const floorGeo = new THREE.PlaneGeometry(16, 12);
+    // 4. Seamless Floor Surface & Surrounding Architecture (Zero side gaps)
+    const floorGeo = new THREE.PlaneGeometry(40, 30);
     const floorMesh = new THREE.Mesh(floorGeo, floorMaterial);
     floorMesh.rotation.x = -Math.PI / 2;
-    floorMesh.position.set(0, -1.45, 0);
+    floorMesh.position.set(0, -1.25, 0);
     floorMesh.receiveShadow = true;
     scene.add(floorMesh);
 
-    // Wall Surrounding the Door Frame
-    const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(3.5, 3.8, 0.2), wallMaterial);
-    wallLeft.position.set(-2.55, 0.3, -0.05);
+    // Wall Surrounding the Door Frame - seamlessly wide to touch all edges
+    const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(25, 16, 0.1), wallMaterial);
+    wallLeft.position.set(-13.2, 0.5, -0.05);
     wallLeft.receiveShadow = true;
     scene.add(wallLeft);
 
-    const wallRight = new THREE.Mesh(new THREE.BoxGeometry(3.5, 3.8, 0.2), wallMaterial);
-    wallRight.position.set(2.55, 0.3, -0.05);
+    const wallRight = new THREE.Mesh(new THREE.BoxGeometry(25, 16, 0.1), wallMaterial);
+    wallRight.position.set(13.2, 0.5, -0.05);
     wallRight.receiveShadow = true;
     scene.add(wallRight);
 
-    const wallTop = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.8, 0.2), wallMaterial);
-    wallTop.position.set(0, 1.8, -0.05);
+    const wallTop = new THREE.Mesh(new THREE.BoxGeometry(50, 10, 0.1), wallMaterial);
+    wallTop.position.set(0, 6.4, -0.05);
     wallTop.receiveShadow = true;
     scene.add(wallTop);
 
@@ -372,9 +393,9 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
 
     // Recessed Architectural Molded Panels (2 Upper, 2 Lower)
     const panelMaterial = new THREE.MeshStandardMaterial({
-      color: 0x361c0d,
-      roughness: 0.48,
-      metalness: 0.05,
+      color: 0xf5e3ca, // Soft light cream recessed depth
+      roughness: 0.44,
+      metalness: 0.02,
     });
 
     const createPanel = (px, py, pw, ph) => {
@@ -540,19 +561,10 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
     hingeGroup.rotation.y = currentDoorAngle;
     interiorPointLight.intensity = isOpenRef.current ? 3.5 : 0;
 
-    // Parallax mouse position
-    const mouseTarget = { x: 0, y: 0 };
-
     const handlePointerMove = (e) => {
       const rect = renderer.domElement.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-      mouse.x = x;
-      mouse.y = y;
-
-      mouseTarget.x = x * 0.18;
-      mouseTarget.y = y * 0.12;
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
       // Raycast hover check
       raycaster.setFromCamera(mouse, camera);
@@ -636,12 +648,10 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
         }
       }
 
-      // Parallax smooth camera lerp (with subtle framing shift when open on desktop)
-      const targetCamX = (isOpenRef.current && isLargeScreen ? 0.65 : 0) + mouseTarget.x;
-      const targetCamY = 0.15 + mouseTarget.y;
-      camera.position.x += (targetCamX - camera.position.x) * 0.045;
-      camera.position.y += (targetCamY - camera.position.y) * 0.045;
-      camera.lookAt(targetCamX * 0.3, 0.05, 0);
+      // Keep door perfectly centered horizontally and vertically at all times
+      camera.position.x = 0;
+      camera.position.y = 0.06;
+      camera.lookAt(0, 0.06, 0);
 
       // Handle Animation States
       if (animState === 'OPENING') {
@@ -720,13 +730,17 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
 
     animationFrameId = requestAnimationFrame(animate);
 
-    // 12. Responsive Resize Handling
+    // 12. Responsive Resize Handling (Dynamically fits door to any screen ratio)
     const handleResize = () => {
       if (!container) return;
       const nw = container.clientWidth || window.innerWidth;
       const nh = container.clientHeight || window.innerHeight;
-      camera.aspect = nw / nh;
-      camera.position.z = nw < 768 ? 5.6 : 4.4;
+      const aspect = nw / nh;
+      camera.aspect = aspect;
+      camera.position.z = computeResponsiveZ(aspect);
+      camera.position.x = 0;
+      camera.position.y = 0.06;
+      camera.lookAt(0, 0.06, 0);
       camera.updateProjectionMatrix();
       renderer.setSize(nw, nh);
     };
@@ -741,7 +755,7 @@ export default function LoginDoorScene({ isOpen, onToggleDoor, plaqueText = 'LOG
       renderer.domElement.removeEventListener('click', handleClick);
 
       // Dispose textures, geometries, materials
-      woodTexture.dispose();
+      doorTexture.dispose();
       plaqueTexture.dispose();
 
       scene.traverse((obj) => {
