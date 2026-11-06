@@ -1,10 +1,15 @@
 import { z } from 'zod';
 import { deviceIdField } from './deviceValidators.js';
 
-// Centre of the class circle saved by the admin. The radius is fixed on the server.
+// Centre of the class circle saved by the admin with customizable radius (default 200m).
 export const classLocationSchema = z.object({
   latitude: z.number().min(-90, 'Latitude is not valid').max(90, 'Latitude is not valid'),
   longitude: z.number().min(-180, 'Longitude is not valid').max(180, 'Longitude is not valid'),
+  radius: z
+    .number()
+    .min(20, 'Radius must be at least 20 meters')
+    .max(2000, 'Radius must not exceed 2000 meters')
+    .optional(),
 });
 
 // Raw GPS reading sent by the student's browser. The decision is never taken from the client.

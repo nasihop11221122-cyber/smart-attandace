@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { getCurrentLocation } from '../../utils/getLocation';
 
-// Same value as CLASS_RADIUS_M on the server. The server decides, this is only for the text.
-const CLASS_RADIUS_M = 200;
+// Default radius if not set
+const DEFAULT_RADIUS_M = 200;
 
 // Only the fields the server needs (accuracy is for display only)
 export const locationPayload = (loc) => ({
   latitude: loc.latitude,
   longitude: loc.longitude,
+  ...(loc.radius ? { radius: Number(loc.radius) } : {}),
 });
 
 export default function LocationField({ value, onChange }) {
@@ -22,6 +23,7 @@ export default function LocationField({ value, onChange }) {
         latitude: reading.latitude,
         longitude: reading.longitude,
         accuracy: reading.accuracy,
+        radius: value?.radius || DEFAULT_RADIUS_M,
       });
     } catch (err) {
       toast.error(err.message);
@@ -30,10 +32,20 @@ export default function LocationField({ value, onChange }) {
     }
   };
 
+  const onRadiusChange = (e) => {
+    const val = Math.max(20, Math.min(2000, Number(e.target.value) || DEFAULT_RADIUS_M));
+    onChange({
+      ...value,
+      radius: val,
+    });
+  };
+
+  const currentRadius = value?.radius ?? DEFAULT_RADIUS_M;
+
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-slate-500">Class location (optional)</span>
+        <span className="text-sm font-medium text-slate-600">Class location (optional)</span>
         <button
           type="button"
           onClick={capture}
@@ -55,9 +67,27 @@ export default function LocationField({ value, onChange }) {
               The accuracy is low. Move near a window or outside and press the button again.
             </p>
           )}
-          <p className="text-xs text-slate-500">
-            Students must be within {CLASS_RADIUS_M} meters of this point.
-          </p>
+
+          <div className="mt-1 flex items-center justify-between gap-3 border-t border-slate-200 pt-2">
+            <label className="flex flex-col gap-0.5 text-xs font-medium text-slate-700">
+              Geofence Radius (meters)
+              <span className="text-[11px] font-normal text-slate-500">
+                Students must be within this distance to mark attendance
+              </span>
+            </label>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min={20}
+                max={2000}
+                step={10}
+                value={currentRadius}
+                onChange={onRadiusChange}
+                className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs font-semibold text-slate-800 outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
+              />
+              <span className="text-xs font-semibold text-slate-500">m</span>
+            </div>
+          </div>
         </>
       ) : (
         <p className="text-xs text-slate-500">

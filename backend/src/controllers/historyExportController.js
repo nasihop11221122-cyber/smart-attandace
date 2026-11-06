@@ -4,8 +4,13 @@ import User from '../models/User.js';
 
 export const getHistoryExport = async (req, res) => {
   const [teachers, students, countRows, dayRows] = await Promise.all([
-    User.find({ role: 'teacher', className: { $type: 'string', $ne: '' } }).select('name className'),
-    Student.find().sort({ rollNo: 1 }),
+    User.find({ role: 'teacher', className: { $type: 'string', $ne: '' } })
+      .select('name className')
+      .lean(),
+    Student.find()
+      .select('name fatherName rollNo className')
+      .sort({ rollNo: 1 })
+      .lean(),
     Attendance.aggregate([
       { $unwind: '$records' },
       {

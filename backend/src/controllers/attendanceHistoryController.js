@@ -66,7 +66,8 @@ export const getAttendanceHistory = async (req, res) => {
       .skip((page - 1) * PAGE_SIZE)
       .limit(PAGE_SIZE)
       .populate('student', 'name rollNo')
-      .populate('decidedBy', 'name'),
+      .populate('decidedBy', 'name')
+      .lean(),
   ]);
 
   res.json({

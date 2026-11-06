@@ -19,27 +19,54 @@ export const unlockAttendance = async (req, res) => {
   const absent = attendance.records.filter((r) => r.status === 'absent').map((r) => r.student);
   const leave = attendance.records.filter((r) => r.status === 'leave').map((r) => r.student);
 
-  const save = () =>
-    AttendanceDraft.findOneAndUpdate(
-      { className: attendance.className, date: attendance.date },
-      {
-        teacher: attendance.teacher,
-        absent,
-        leave,
-        unlockedAt: new Date(),
-        unlockedBy: req.user._id,
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+  const draftPayload = {
+    className: attendance.className,
+    date: attendance.date,
+    teacher: attendance.teacher,
+    absent,
+    leave,
+    unlockedAt: new Date(),
+    unlockedBy: req.user._id,
+  };
 
+  const session = await mongoose.startSession();
   try {
-    await save();
+    await session.withTransaction(async () => {
+      await AttendanceDraft.findOneAndUpdate(
+        { className: attendance.className, date: attendance.date },
+        draftPayload,
+        { upsert: true, new: true, setDefaultsOnInsert: true, session }
+      );
+      await Attendance.deleteOne({ _id: attendance._id }, { session });
+    });
   } catch (err) {
-    if (err.code === 11000) await save();
-    else throw err;
-  }
+    // Graceful fallback for standalone MongoDB deployments where transactions are not supported
+    const isTxnUnsupported =
+      err.message?.includes('Transactions are not supported') ||
+      err.code === 263 ||
+      err.codeName === 'OperationNotSupportedInTransaction';
 
-  await attendance.deleteOne();
+    if (isTxnUnsupported) {
+      const saveFallback = () =>
+        AttendanceDraft.findOneAndUpdate(
+          { className: attendance.className, date: attendance.date },
+          draftPayload,
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+      try {
+        await saveFallback();
+      } catch (upsertErr) {
+        if (upsertErr.code === 11000) await saveFallback();
+        else throw upsertErr;
+      }
+      await Attendance.deleteOne({ _id: attendance._id });
+    } else {
+      throw err;
+    }
+  } finally {
+    await session.endSession();
+  }
 
   res.json({ message: 'Attendance unlocked' });
 };

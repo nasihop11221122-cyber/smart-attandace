@@ -30,7 +30,10 @@ export const getDashboard = async (req, res) => {
         },
       },
     ]),
-    Attendance.find({ date: today }).sort({ createdAt: -1 }).populate('teacher', 'name'),
+    Attendance.find({ date: today })
+      .sort({ createdAt: -1 })
+      .populate('teacher', 'name')
+      .lean(),
   ]);
 
   // Har din ke akhir tak kitne students the (barhta hua total)

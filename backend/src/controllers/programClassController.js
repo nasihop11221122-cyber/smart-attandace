@@ -9,7 +9,7 @@ const CASE_INSENSITIVE = { locale: 'en', strength: 2 };
 
 const publicLocation = (loc) =>
   hasClassLocation(loc)
-    ? { latitude: loc.latitude, longitude: loc.longitude, radius: CLASS_RADIUS_M }
+    ? { latitude: loc.latitude, longitude: loc.longitude, radius: loc.radius || CLASS_RADIUS_M }
     : null;
 
 const publicClass = (c, studentCount = 0, courseCount = 0) => ({

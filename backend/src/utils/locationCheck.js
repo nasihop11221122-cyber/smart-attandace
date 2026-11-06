@@ -61,7 +61,10 @@ export const evaluateLocation = ({ classLocation, reading, now = Date.now(), sam
 
   // Layer: the circle decision
   const distance = distanceMeters(classLocation, reading);
-  const radius = CLASS_RADIUS_M;
+  const radius =
+    typeof classLocation?.radius === 'number' && classLocation.radius > 0
+      ? classLocation.radius
+      : CLASS_RADIUS_M;
   const accuracy = reading.accuracy > 0 ? reading.accuracy : 0;
 
   let verdict;
