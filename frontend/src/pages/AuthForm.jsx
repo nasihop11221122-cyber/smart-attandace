@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LoginDoorScene from '../components/auth/LoginDoorScene';
+import GlassFormCard from '../components/auth/GlassFormCard';
 
 /* ==========================================================================
    ROLE NAVIGATION MAPPING (Preserved Business Logic)
@@ -167,177 +168,19 @@ export default function AuthForm({ mode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.97 }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl border border-[#E7E2D9] bg-white p-7 shadow-[0_20px_50px_rgba(20,33,61,0.08)] sm:p-8"
+              className="pointer-events-auto"
             >
-              {/* Clean Academic Header (No plips, pure typography) */}
-              <div className="flex flex-col items-start">
-                <h1 className="text-2xl font-bold tracking-tight text-[#14213D] sm:text-[26px]">
-                  {isRegister ? 'Create an account' : 'Welcome back'}
-                </h1>
-                <p className="mt-1.5 text-xs text-[#5B6475] sm:text-sm">
-                  {isRegister
-                    ? 'Enter your details below to register on the attendance system.'
-                    : 'Sign in to access your attendance workspace.'}
-                </p>
-              </div>
-
-              {/* Error Notice */}
-              <AnimatePresence mode="wait">
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    role="alert"
-                    className="mt-4 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-700 shadow-2xs"
-                  >
-                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                    <span>{error}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Form Inputs (Enabled strictly when light is ON) */}
-              <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
-                {/* Name Field (Register Mode Only) */}
-                {isRegister && (
-                  <div>
-                    <label className="block text-xs font-semibold text-[#14213D]">
-                      Full Name
-                    </label>
-                    <div className="relative mt-1.5">
-                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#5B6475]">
-                        <User className="h-4 w-4" />
-                      </div>
-                      <input
-                        name="name"
-                        value={form.name}
-                        onChange={onChange}
-                        required
-                        disabled={!isDoorOpen}
-                        autoComplete="name"
-                        placeholder="e.g. Alex Morgan"
-                        className="w-full rounded-xl border border-[#E7E2D9] bg-[#FAF8F4]/60 py-2.5 pl-10 pr-4 text-sm text-[#14213D] placeholder-[#5B6475]/50 outline-none transition-all duration-200 focus:border-[#3B4CCA] focus:bg-white focus:ring-4 focus:ring-[#3B4CCA]/10 disabled:opacity-50"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Email Field */}
-                <div>
-                  <label className="block text-xs font-semibold text-[#14213D]">
-                    Email Address
-                  </label>
-                  <div className="relative mt-1.5">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#5B6475]">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={onChange}
-                      required
-                      disabled={!isDoorOpen}
-                      autoComplete="email"
-                      placeholder="name@school.edu or user@domain.com"
-                      className="w-full rounded-xl border border-[#E7E2D9] bg-[#FAF8F4]/60 py-2.5 pl-10 pr-4 text-sm text-[#14213D] placeholder-[#5B6475]/50 outline-none transition-all duration-200 focus:border-[#3B4CCA] focus:bg-white focus:ring-4 focus:ring-[#3B4CCA]/10 disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold text-[#14213D]">
-                      Password
-                    </label>
-                    {!isRegister && (
-                      <Link
-                        to="/forgot-password"
-                        className="text-xs font-medium text-[#3B4CCA] transition-colors duration-200 hover:text-[#14213D] hover:underline"
-                      >
-                        Forgot password?
-                      </Link>
-                    )}
-                  </div>
-                  <div className="relative mt-1.5">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#5B6475]">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <input
-                      name="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={form.password}
-                      onChange={onChange}
-                      required
-                      disabled={!isDoorOpen}
-                      autoComplete={isRegister ? 'new-password' : 'current-password'}
-                      placeholder="Enter your secret password"
-                      className="w-full rounded-xl border border-[#E7E2D9] bg-[#FAF8F4]/60 py-2.5 pl-10 pr-10 text-sm text-[#14213D] placeholder-[#5B6475]/50 outline-none transition-all duration-200 focus:border-[#3B4CCA] focus:bg-white focus:ring-4 focus:ring-[#3B4CCA]/10 disabled:opacity-50"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((s) => !s)}
-                      disabled={!isDoorOpen}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#5B6475] transition-colors duration-200 hover:text-[#14213D]"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Primary Action Button (Solid Academic Indigo) */}
-                <motion.button
-                  type="submit"
-                  disabled={busy || !isDoorOpen}
-                  whileHover={busy ? {} : { scale: 1.015 }}
-                  whileTap={busy ? {} : { scale: 0.985 }}
-                  className="mt-2 flex min-h-[46px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#3B4CCA] px-4 py-2.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(59,76,202,0.22)] transition-all duration-200 hover:bg-[#2e3ea8] hover:shadow-[0_12px_26px_rgba(59,76,202,0.3)] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#3B4CCA]/20"
-                >
-                  {busy ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span>Authenticating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{isRegister ? 'Create Account' : 'Sign In to Attendance'}</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </motion.button>
-
-                {/* Mode Switcher */}
-                <div className="mt-4 text-center text-xs text-[#5B6475]">
-                  {isRegister ? (
-                    <p>
-                      Already have an account?{' '}
-                      <Link
-                        to="/login"
-                        className="font-bold text-[#3B4CCA] transition-colors hover:text-[#14213D] hover:underline"
-                      >
-                        Sign in here
-                      </Link>
-                    </p>
-                  ) : (
-                    <p>
-                      Don't have an attendance account?{' '}
-                      <Link
-                        to="/register"
-                        className="font-bold text-[#3B4CCA] transition-colors hover:text-[#14213D] hover:underline"
-                      >
-                        Create an account
-                      </Link>
-                    </p>
-                  )}
-                </div>
-              </form>
+              <GlassFormCard
+                form={form}
+                onChange={onChange}
+                onSubmit={onSubmit}
+                error={error}
+                busy={busy}
+                isRegister={isRegister}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+                isDoorOpen={isDoorOpen}
+              />
             </motion.div>
           )}
         </AnimatePresence>
