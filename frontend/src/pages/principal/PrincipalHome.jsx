@@ -177,8 +177,8 @@ export default function PrincipalHome() {
       <div>
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-slate-800">Today's overview</h3>
-            <p className="text-sm text-slate-500">Teachers, students and attendance</p>
+            <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Today's Overview</h3>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Daily educational progress and live attendance submission</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
             <span className="relative flex h-2 w-2">
@@ -192,10 +192,10 @@ export default function PrincipalHome() {
         <AttendanceOverview stats={stats} notifications={notifications} />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="rounded-2xl border border-slate-200/80 bg-white dark:bg-[#0b1f2a] dark:border-teal-900/40 p-5 shadow-md shadow-slate-200/50 dark:shadow-none sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold text-slate-800">Notifications</h3>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Attendance Notifications</h3>
+          <span className="rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700 px-3 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
             {totals.submittedToday} of {classTotal} classes submitted today
           </span>
         </div>
@@ -214,7 +214,7 @@ export default function PrincipalHome() {
                   </Svg>
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-slate-800">
+                  <p className="text-sm text-slate-900 dark:text-slate-100">
                     <span className="font-semibold">{n.className}</span> attendance submitted by{' '}
                     {n.teacherName}
                     {fresh.has(n.id) && (
@@ -223,7 +223,7 @@ export default function PrincipalHome() {
                       </span>
                     )}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     {formatTime(n.time)} · Present {n.present} · Absent {n.absent} · Leave {n.leave}
                   </p>
                 </div>

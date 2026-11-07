@@ -98,32 +98,32 @@ export default function StudentAttendance() {
   };
 
   if (!data) {
-    return <p className={error ? 'text-red-600' : 'text-slate-500'}>{error || 'Loading…'}</p>;
+    return <p className={error ? 'text-red-600' : 'text-slate-500 dark:text-slate-400'}>{error || 'Loading…'}</p>;
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-800">Mark Attendance</h2>
-        <p className="text-sm text-slate-500">{formatDate(data.date)}</p>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Mark Attendance</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{formatDate(data.date)}</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0b1f2a] p-5 shadow-sm sm:p-6">
         <div className="space-y-1.5 text-sm">
           <p className="flex justify-between gap-3">
-            <span className="text-slate-500">Class</span>
-            <span className="font-medium text-slate-800">{data.className || '—'}</span>
+            <span className="text-slate-500 dark:text-slate-400">Class</span>
+            <span className="font-medium text-slate-900 dark:text-white">{data.className || '—'}</span>
           </p>
           {data.semester && (
             <p className="flex justify-between gap-3">
-              <span className="text-slate-500">Semester</span>
-              <span className="font-medium text-slate-800">{data.semester}</span>
+              <span className="text-slate-500 dark:text-slate-400">Semester</span>
+              <span className="font-medium text-slate-900 dark:text-white">{data.semester}</span>
             </p>
           )}
           {data.rollNo && (
             <p className="flex justify-between gap-3">
-              <span className="text-slate-500">Roll No</span>
-              <span className="font-medium text-slate-800">{data.rollNo}</span>
+              <span className="text-slate-500 dark:text-slate-400">Roll No</span>
+              <span className="font-medium text-slate-900 dark:text-white">{data.rollNo}</span>
             </p>
           )}
         </div>
@@ -146,7 +146,7 @@ export default function StudentAttendance() {
             <>
               <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
                 <p className="text-xs font-medium text-blue-600">Running now</p>
-                <p className="mt-0.5 text-lg font-semibold text-slate-800">{course.name}</p>
+                <p className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">{course.name}</p>
                 <p className="text-sm text-slate-600">
                   {format12(course.startTime)} – {format12(course.endTime)}
                 </p>
@@ -208,15 +208,15 @@ export default function StudentAttendance() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-xs">
         <div className="rounded-xl bg-green-50 py-3">
           <p className="text-2xl font-semibold text-green-700">{data.counts.accepted}</p>
-          <p className="text-slate-500">Accepted</p>
+          <p className="text-slate-500 dark:text-slate-400">Accepted</p>
         </div>
         <div className="rounded-xl bg-amber-50 py-3">
           <p className="text-2xl font-semibold text-amber-700">{data.counts.pending}</p>
-          <p className="text-slate-500">Pending</p>
+          <p className="text-slate-500 dark:text-slate-400">Pending</p>
         </div>
         <div className="rounded-xl bg-red-50 py-3">
           <p className="text-2xl font-semibold text-red-700">{data.counts.rejected}</p>
-          <p className="text-slate-500">Rejected</p>
+          <p className="text-slate-500 dark:text-slate-400">Rejected</p>
         </div>
       </div>
     </div>

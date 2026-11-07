@@ -371,11 +371,11 @@ export default function TeacherAttendance() {
           {students.map((s) => {
             const current = submitted ? s.status : marks[s.id] || 'present';
             return (
-              <div key={s.id} className="rounded-xl border border-slate-200 bg-white p-5">
+              <div key={s.id} className="group rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0b1f2a] p-5 shadow-sm transition-all hover:-translate-y-1 hover:border-teal-500/50 dark:hover:border-teal-400/50 hover:shadow-md">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="truncate text-lg font-semibold text-slate-800">{s.name}</h3>
-                    <p className="truncate text-sm text-slate-500">{s.fatherName}</p>
+                    <h3 className="truncate text-lg font-bold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">{s.name}</h3>
+                    <p className="truncate text-sm font-medium text-slate-500 dark:text-slate-400">{s.fatherName}</p>
                   </div>
                   <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
                     Roll {s.rollNo}

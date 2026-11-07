@@ -23,6 +23,12 @@ const userSchema = new mongoose.Schema(
     lockUntil: { type: Date, default: null, select: false },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpires: { type: Date, select: false },
+    enrollmentStatus: { type: String, enum: ['active', 'graduated'], default: 'active' },
+    graduatedAt: { type: Date },
+    graduatedProgram: { type: String },
+    graduatedSemester: { type: String },
+    certificateId: { type: String },
+    finalAttendancePercent: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

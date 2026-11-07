@@ -27,7 +27,7 @@ const NOTE_TEXT = {
 function DateList({ title, dates, chip }) {
   return (
     <div>
-      <p className="text-sm font-medium text-slate-700">
+      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
         {title} <span className="text-slate-400">({dates.length})</span>
       </p>
       {dates.length === 0 ? (
@@ -108,9 +108,9 @@ export default function StudentHistory() {
             ))}
           </div>
 
-          <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="space-y-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0b1f2a] p-5 shadow-sm sm:p-6">
             <div>
-              <h3 className="text-lg font-semibold text-slate-800">{course.name}</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">{course.name}</h3>
               {course.startTime && (
                 <p className="text-sm text-slate-500">
                   {format12(course.startTime)} – {format12(course.endTime)}

@@ -45,8 +45,8 @@ export default function TeacherHistory() {
       hint: 'Download the complete attendance of your class as an Excel sheet.',
       button: 'Download Excel',
       icon: 'from-emerald-500 to-teal-600',
-      card: 'from-emerald-50/80 to-white/60 ring-emerald-200/70',
-      btn: 'bg-emerald-600 hover:bg-emerald-700',
+      card: 'border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0b1f2a]',
+      btn: 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600',
       glyph: (
         <Svg>
           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -62,8 +62,8 @@ export default function TeacherHistory() {
       hint: 'Download the complete attendance of your class as a PDF to print or share.',
       button: 'Download PDF',
       icon: 'from-blue-600 to-indigo-600',
-      card: 'from-blue-50/80 to-white/60 ring-blue-200/70',
-      btn: 'bg-blue-700 hover:bg-blue-800',
+      card: 'border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0b1f2a]',
+      btn: 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600',
       glyph: (
         <Svg>
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -86,7 +86,7 @@ export default function TeacherHistory() {
         {options.map((o) => (
           <div
             key={o.type}
-            className={`flex flex-col gap-3 rounded-2xl border border-white/70 bg-gradient-to-br p-4 shadow-sm ring-1 backdrop-blur-md transition hover:shadow-md ${o.card}`}
+            className={`flex flex-col justify-between gap-4 rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md ${o.card}`}
           >
             <div className="flex items-center gap-3">
               <span
@@ -95,8 +95,8 @@ export default function TeacherHistory() {
                 {o.glyph}
               </span>
               <div className="min-w-0">
-                <h3 className="text-base font-semibold text-slate-800">{o.title}</h3>
-                <p className="text-xs leading-snug text-slate-500">{o.hint}</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">{o.title}</h3>
+                <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">{o.hint}</p>
               </div>
             </div>
 

@@ -6,6 +6,7 @@ import {
   deleteClass,
   renameProgram,
   deleteProgram,
+  promoteSemester,
 } from '../controllers/programClassController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -30,6 +31,7 @@ router.get('/', wrap(getClasses));
 router.post('/', validate(createClassSchema), wrap(createClass));
 
 // Program level (must stay above the /:id routes)
+router.post('/promote', wrap(promoteSemester));
 router.patch('/program', validate(renameProgramSchema), wrap(renameProgram));
 router.delete('/program', wrap(deleteProgram));
 

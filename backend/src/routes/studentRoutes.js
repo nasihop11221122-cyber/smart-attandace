@@ -2,12 +2,16 @@ import { Router } from 'express';
 import {
   getStudents,
   createStudent,
+  bulkCreateStudents,
   updateStudent,
   deleteStudent,
+  graduateClass,
+  getGraduatedStudents,
+  promoteSchoolClass,
 } from '../controllers/studentController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { studentSchema } from '../validators/studentValidators.js';
+import { studentSchema, bulkStudentSchema } from '../validators/studentValidators.js';
 
 const router = Router();
 
@@ -25,6 +29,10 @@ router.use(protect, onlyTeacher);
 
 router.get('/', wrap(getStudents));
 router.post('/', validate(studentSchema), wrap(createStudent));
+router.post('/bulk', validate(bulkStudentSchema), wrap(bulkCreateStudents));
+router.get('/graduated', wrap(getGraduatedStudents));
+router.post('/graduate', wrap(graduateClass));
+router.post('/promote', wrap(promoteSchoolClass));
 router.patch('/:id', validate(studentSchema), wrap(updateStudent));
 router.delete('/:id', wrap(deleteStudent));
 

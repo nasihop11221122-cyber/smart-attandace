@@ -5,7 +5,12 @@ const studentSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true, maxlength: 60 },
     fatherName: { type: String, required: true, trim: true, maxlength: 60 },
     rollNo: { type: Number, required: true, min: 1 },
-    className: { type: String, required: true, trim: true, maxlength: 60 },
+    className: { type: String, trim: true, maxlength: 60 },
+    status: { type: String, enum: ['active', 'graduated'], default: 'active' },
+    graduatedAt: { type: Date },
+    graduatedClass: { type: String },
+    certificateId: { type: String },
+    finalAttendancePercent: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

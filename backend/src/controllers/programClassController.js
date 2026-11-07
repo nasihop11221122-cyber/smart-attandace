@@ -174,3 +174,64 @@ export const deleteProgram = async (req, res) => {
   await ProgramClass.deleteMany({ _id: { $in: ids } });
   res.json({ message: 'Program deleted successfully' });
 };
+
+export const promoteSemester = async (req, res) => {
+  const { sourceClassId, targetClassId } = req.body;
+  if (!mongoose.isValidObjectId(sourceClassId) || !mongoose.isValidObjectId(targetClassId)) {
+    return res.status(400).json({ message: 'Invalid class ID provided' });
+  }
+
+  if (sourceClassId === targetClassId) {
+    return res.status(400).json({ message: 'Source and Target semester cannot be the same' });
+  }
+
+  const [sourceCls, targetCls] = await Promise.all([
+    ProgramClass.findById(sourceClassId),
+    ProgramClass.findById(targetClassId),
+  ]);
+
+  if (!sourceCls) return res.status(404).json({ message: 'Source semester not found' });
+  if (!targetCls) return res.status(404).json({ message: 'Target semester not found' });
+
+  // Check if source has active students
+  const activeStudents = await User.find({
+    role: 'student',
+    classId: sourceCls._id,
+    enrollmentStatus: { $ne: 'graduated' },
+  });
+
+  if (activeStudents.length === 0) {
+    return res.status(400).json({ message: 'No active students found in this semester to promote' });
+  }
+
+  // Safety Shield Check: Does the target semester already have active students?
+  const targetStudentCount = await User.countDocuments({
+    role: 'student',
+    classId: targetCls._id,
+    enrollmentStatus: { $ne: 'graduated' },
+  });
+
+  if (targetStudentCount > 0) {
+    return res.status(409).json({
+      message: `Cannot promote: ${targetCls.semester} already contains ${targetStudentCount} active students. Please promote or pass out the existing students first so batches do not get mixed up!`,
+    });
+  }
+
+  // Promote all students: batch update
+  const studentIds = activeStudents.map((s) => s._id);
+  await User.updateMany(
+    { _id: { $in: studentIds } },
+    {
+      $set: {
+        classId: targetCls._id,
+        className: classLabel(targetCls),
+      },
+    }
+  );
+
+  res.json({
+    success: true,
+    message: `Successfully promoted all ${activeStudents.length} students from ${sourceCls.semester} to ${targetCls.semester}!`,
+    promotedCount: activeStudents.length,
+  });
+};

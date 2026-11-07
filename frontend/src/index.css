@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
 /* =========================================================
    GLOBAL TYPOGRAPHY & RTL SUPPORT
    ========================================================= */
@@ -12,6 +14,28 @@
   font-family: 'Cairo', 'Noto Nastaliq Urdu', system-ui, sans-serif;
   text-align: right;
 }
+
+/* Ensure all page titles and headings are 100% crisp, prominent, and wazih in both themes */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+.dark h1,
+.dark h2 {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] h3,
+.dark h3 {
+  color: #f8fafc;
+}
+
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+:root:not(.dark):not([data-theme="dark"]) h1,
+:root:not(.dark):not([data-theme="dark"]) h2 {
+  color: #0f172a;
+}
+
 
 /* =========================================================
    10 ULTRA-WONDERFUL TEMPLATES (LIGHT & DARK VARIATIONS)

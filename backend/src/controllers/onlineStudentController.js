@@ -25,7 +25,7 @@ const toPublic = (u, cls) => ({
 const duplicateMessage = (err) => (err.keyPattern?.rollNo ? ROLL_TAKEN : EMAIL_TAKEN);
 
 export const getOnlineStudents = async (req, res) => {
-  const filter = { role: 'student' };
+  const filter = { role: 'student', enrollmentStatus: { $ne: 'graduated' } };
   const { classId } = req.query;
 
   if (typeof classId === 'string' && classId) {
@@ -202,3 +202,139 @@ export const getStudentAttendance = async (req, res) => {
     courses: await buildStudentAttendance(student),
   });
 };
+
+/* ---------- Bulk Create Online Students ---------- */
+
+export const bulkCreateOnlineStudents = async (req, res) => {
+  const { classId, students } = req.body;
+
+  const cls = await ProgramClass.findById(classId);
+  if (!cls) return res.status(400).json({ message: BAD_CLASS });
+
+  const emailsToTest = students.map((s) => s.email.toLowerCase().trim());
+  const existingInClass = await User.find({ role: 'student', classId: cls._id }).select('rollNo email');
+  const existingRolls = new Set(existingInClass.map((s) => String(s.rollNo).trim()));
+  const allExistingEmails = new Set(
+    (await User.find({ email: { $in: emailsToTest } }).select('email')).map((u) => u.email.toLowerCase().trim())
+  );
+
+  const defaultHashed = await bcrypt.hash('Student@123', 10);
+  const toInsert = [];
+  const errors = [];
+  const seenRolls = new Set();
+  const seenEmails = new Set();
+
+  for (const s of students) {
+    const rollStr = String(s.rollNo).trim();
+    const emailLower = s.email.toLowerCase().trim();
+
+    if (seenRolls.has(rollStr) || existingRolls.has(rollStr)) {
+      errors.push({ rollNo: s.rollNo, name: s.name, reason: 'Duplicate roll number in this class' });
+      continue;
+    }
+    if (seenEmails.has(emailLower) || allExistingEmails.has(emailLower)) {
+      errors.push({ rollNo: s.rollNo, name: s.name, reason: 'Email already registered' });
+      continue;
+    }
+
+    seenRolls.add(rollStr);
+    seenEmails.add(emailLower);
+
+    let hashedPassword = defaultHashed;
+    if (s.password && s.password.trim() && s.password.trim() !== 'Student@123') {
+      hashedPassword = await bcrypt.hash(s.password.trim(), 10);
+    }
+
+    toInsert.push({
+      name: s.name.trim(),
+      email: emailLower,
+      password: hashedPassword,
+      role: 'student',
+      classId: cls._id,
+      className: classLabel(cls),
+      rollNo: rollStr,
+    });
+  }
+
+  let createdCount = 0;
+  if (toInsert.length > 0) {
+    const created = await User.insertMany(toInsert, { ordered: false });
+    createdCount = created.length;
+  }
+
+  res.status(201).json({
+    success: true,
+    createdCount,
+    skippedCount: errors.length,
+    errors,
+  });
+};
+
+/* ---------- Graduate / Pass Out Online Class ---------- */
+
+export const graduateClass = async (req, res) => {
+  const { classId } = req.body;
+  if (!mongoose.isValidObjectId(classId)) return res.status(400).json({ message: 'Invalid class ID' });
+
+  const cls = await ProgramClass.findById(classId);
+  if (!cls) return res.status(404).json({ message: 'Class not found' });
+
+  const students = await User.find({
+    role: 'student',
+    classId: cls._id,
+    enrollmentStatus: { $ne: 'graduated' },
+  });
+
+  if (students.length === 0) {
+    return res.status(400).json({ message: 'No active students in this class to pass out' });
+  }
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const progCode = cls.program.replace(/[^A-Za-z0-9]/g, '').slice(0, 6).toUpperCase() || 'PROG';
+
+  let count = 0;
+  for (const s of students) {
+    const total = await AttendanceRequest.countDocuments({ studentId: s._id });
+    const accepted = await AttendanceRequest.countDocuments({ studentId: s._id, status: 'accepted' });
+    const pct = total > 0 ? Math.round((accepted / total) * 100) : 100;
+
+    s.enrollmentStatus = 'graduated';
+    s.graduatedAt = now;
+    s.graduatedProgram = cls.program;
+    s.graduatedSemester = cls.semester;
+    s.finalAttendancePercent = pct;
+    s.certificateId = `CERT-${year}-${progCode}-${String(s.rollNo || count + 1).padStart(3, '0')}`;
+    s.classId = null;
+    s.className = '';
+    await s.save();
+    count++;
+  }
+
+  res.json({
+    success: true,
+    message: `Successfully passed out ${count} students from ${cls.program} (${cls.semester})`,
+    graduatedCount: count,
+  });
+};
+
+export const getGraduatedStudents = async (req, res) => {
+  const students = await User.find({ role: 'student', enrollmentStatus: 'graduated' })
+    .sort({ graduatedAt: -1, name: 1 })
+    .lean();
+
+  res.json({
+    students: students.map((s) => ({
+      id: String(s._id),
+      name: s.name,
+      email: s.email,
+      rollNo: s.rollNo || '—',
+      program: s.graduatedProgram || '—',
+      semester: s.graduatedSemester || '—',
+      graduatedAt: s.graduatedAt,
+      attendancePercent: s.finalAttendancePercent ?? 100,
+      certificateId: s.certificateId || `CERT-${s._id.toString().slice(-6).toUpperCase()}`,
+    })),
+  });
+};
+

@@ -41,6 +41,7 @@ import StudentProfile from './pages/student/StudentProfile';
 import AdminHolidays from './pages/admin/AdminHolidays';
 import AdminHistory from './pages/admin/AdminHistory';
 import TeacherHistory from './pages/teacher/TeacherHistory.jsx';
+import StudentCards from './pages/StudentCards';
 
 export default function App() {
   return (
@@ -52,6 +53,7 @@ export default function App() {
             <PwaInstallPrompt />
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/student-cards" element={<StudentCards />} />
               <Route path="/login" element={<PublicRoute><AuthForm mode="login" /></PublicRoute>} />
               <Route path="/register" element={<PublicRoute><AuthForm mode="register" /></PublicRoute>} />
               <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />

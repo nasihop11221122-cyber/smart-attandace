@@ -142,7 +142,10 @@ export default function AdminHistory() {
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-slate-800">Attendance History</h2>
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Attendance History & Audit</h2>
+          <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">All student attendance requests, approvals, location verification, and manual overrides.</p>
+        </div>
         <DownloadHistoryMenu />
       </div>
       <p className="mt-1 text-sm text-slate-500">
@@ -151,9 +154,9 @@ export default function AdminHistory() {
 
       <form
         onSubmit={onSubmit}
-        className="mt-6 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3"
+        className="mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0b1f2a] p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-3"
       >
-        <label className="flex flex-col gap-1.5 text-sm text-slate-500">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           From
           <input
             type="date"
@@ -164,12 +167,12 @@ export default function AdminHistory() {
           />
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-slate-500">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           To
           <input type="date" name="to" value={form.to} onChange={onChange} className={inputClass} />
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-slate-500">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Status
           <select name="status" value={form.status} onChange={onChange} className={inputClass}>
             <option value="">All</option>
@@ -179,7 +182,7 @@ export default function AdminHistory() {
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-slate-500">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Class
           <select name="classId" value={form.classId} onChange={onClassChange} className={inputClass}>
             <option value="">All classes</option>
@@ -191,7 +194,7 @@ export default function AdminHistory() {
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-slate-500">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Course
           <select
             name="courseId"
@@ -209,7 +212,7 @@ export default function AdminHistory() {
           </select>
         </label>
 
-        <label className="flex flex-col gap-1.5 text-sm text-slate-500">
+        <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Student
           <input
             type="search"
@@ -301,7 +304,7 @@ export default function AdminHistory() {
             }`}
           >
             <table className="w-full min-w-[860px] text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500">
+              <thead className="border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-900/50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="px-4 py-3 font-medium">Student</th>
                   <th className="px-4 py-3 font-medium">Course</th>
@@ -312,7 +315,7 @@ export default function AdminHistory() {
                   <th className="px-4 py-3 font-medium">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 text-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-200">
                 {requests.map((r) => (
                   <tr key={r.id}>
                     <td className="px-4 py-3">

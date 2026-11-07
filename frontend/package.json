@@ -13,6 +13,7 @@
     "axios": "^1.7.7",
     "exceljs": "^4.4.0",
     "framer-motion": "^14.2.0",
+    "gsap": "^3.15.1",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "lucide-react": "^1.56.0",

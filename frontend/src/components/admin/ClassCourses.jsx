@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { ArrowLeft, Plus, Clock, Calendar, Edit2, Trash2 } from 'lucide-react';
 import api from '../../api/axios';
 import CourseFormModal from './CourseFormModal';
 import DeleteCourseModal from './DeleteCourseModal';
@@ -36,126 +37,101 @@ export default function ClassCourses({ classItem, onBack }) {
   }, [load]);
 
   return (
-    <div>
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <button
             onClick={onBack}
-            title="Back"
+            title="Back to classes"
             aria-label="Back to classes"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 hover:-translate-y-0.5 shadow-sm cursor-pointer"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
+            <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
-            <h2 className="truncate text-2xl font-semibold text-slate-800">{classItem.program}</h2>
-            <p className="truncate text-sm text-slate-500">{classItem.semester} · Courses</p>
+            <h2 className="truncate text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {classItem.program}
+            </h2>
+            <p className="truncate text-sm font-medium text-slate-500 dark:text-slate-400">
+              {classItem.semester} · Class Courses
+            </p>
           </div>
         </div>
 
         <button
           onClick={() => setCreating(true)}
-          className="shrink-0 rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          className="flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer"
         >
-          Create
+          <Plus className="h-4 w-4" />
+          <span>Create Course</span>
         </button>
       </div>
 
       {loading ? (
-        <p className="mt-6 text-slate-500">Loading…</p>
+        <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">Loading…</p>
       ) : courses.length === 0 ? (
-        <p className="mt-6 text-slate-500">No courses yet. Press Create to add the first course.</p>
+        <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-8 text-center bg-white/50 dark:bg-slate-900/40">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            No courses yet. Press <span className="font-semibold text-teal-600 dark:text-teal-400">Create Course</span> to add the first one.
+          </p>
+        </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {courses.map((c) => (
-            <div key={c.id} className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="truncate text-lg font-semibold text-slate-800">{c.name}</h3>
+            <div
+              key={c.id}
+              className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#0b1f2a] p-5 shadow-sm transition-all hover:-translate-y-1 hover:border-teal-500/50 dark:hover:border-teal-400/50 hover:shadow-md"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                    {c.name}
+                  </h3>
+                </div>
 
-              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-4 w-4"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                {format12(c.startTime)} – {format12(c.endTime)}
-              </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 px-2.5 py-1 text-xs font-semibold text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
+                    <Clock className="h-3.5 w-3.5" />
+                    {format12(c.startTime)} – {format12(c.endTime)}
+                  </span>
+                </div>
 
-              {c.days.length > 0 ? (
-                <p className="mt-2 text-sm font-medium text-slate-700">{formatDays(c.days)}</p>
-              ) : (
-                <p className="mt-2 text-sm font-medium text-amber-700">
-                  Days are not set. Press update to choose the days.
-                </p>
-              )}
-              <p className="mt-1 text-xs text-slate-500">
-                {formatCourseDate(c.startDate)} – {formatCourseDate(c.endDate)}
-              </p>
+                <div className="mt-3">
+                  {c.days.length > 0 ? (
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {formatDays(c.days)}
+                    </p>
+                  ) : (
+                    <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      Days are not set. Update course to set days.
+                    </p>
+                  )}
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {formatCourseDate(c.startDate)} – {formatCourseDate(c.endDate)}
+                  </p>
+                </div>
+              </div>
 
-              <div className="mt-4 flex gap-2">
+              <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800/80 pt-3">
                 <button
                   onClick={() => setEditing(c)}
-                  title="Update"
+                  title="Update course"
                   aria-label="Update course"
-                  className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-blue-700 hover:text-white"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 dark:hover:bg-teal-950/40 dark:hover:text-teal-300 cursor-pointer"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-4 w-4"
-                  >
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Update</span>
                 </button>
 
                 <button
                   onClick={() => setDeleting(c)}
-                  title="Delete"
+                  title="Delete course"
                   aria-label="Delete course"
-                  className="grid h-9 w-9 place-items-center rounded-md border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white"
+                  className="flex items-center gap-1.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 transition-all hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white cursor-pointer"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-4 w-4"
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                    <path d="M10 11v6" />
-                    <path d="M14 11v6" />
-                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                  </svg>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete</span>
                 </button>
               </div>
             </div>

@@ -2,11 +2,14 @@ import { Router } from 'express';
 import {
   getOnlineStudents,
   createOnlineStudent,
+  bulkCreateOnlineStudents,
   updateOnlineStudent,
   deleteOnlineStudent,
   getDeviceChanges,
   decideDeviceChange,
   getStudentAttendance,
+  graduateClass,
+  getGraduatedStudents,
 } from '../controllers/onlineStudentController.js';
 import { markStudentPresent } from '../controllers/attendanceCorrectionController.js';
 import { protect } from '../middleware/auth.js';
@@ -14,6 +17,7 @@ import { validate } from '../middleware/validate.js';
 import {
   onlineStudentSchema,
   onlineStudentUpdateSchema,
+  bulkOnlineStudentSchema,
 } from '../validators/onlineStudentValidators.js';
 import { deviceChangeDecisionSchema } from '../validators/deviceValidators.js';
 import { markPresentSchema } from '../validators/correctionValidators.js';
@@ -34,6 +38,11 @@ router.use(protect, onlyAdmin);
 
 router.get('/', wrap(getOnlineStudents));
 router.post('/', validate(onlineStudentSchema), wrap(createOnlineStudent));
+router.post('/bulk', validate(bulkOnlineStudentSchema), wrap(bulkCreateOnlineStudents));
+
+// Graduated / Pass-out students & Graduation action
+router.get('/graduated', wrap(getGraduatedStudents));
+router.post('/graduate', wrap(graduateClass));
 
 // Phone change requests (these paths are before '/:id' on purpose)
 router.get('/device-changes', wrap(getDeviceChanges));

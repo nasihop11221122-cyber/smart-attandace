@@ -118,10 +118,10 @@ export default function AdminHome() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="rounded-2xl border border-slate-200/80 bg-white dark:bg-[#0b1f2a] dark:border-teal-900/40 p-5 shadow-md shadow-slate-200/50 dark:shadow-none sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold text-slate-800">Pending Requests</h3>
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Pending Attendance Requests</h3>
+          <span className="rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800/60 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
             {requests ? requests.length : 0} pending
           </span>
         </div>
@@ -140,7 +140,7 @@ export default function AdminHome() {
                   {r.studentName.charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-slate-800">
+                  <p className="text-sm text-slate-900 dark:text-slate-100">
                     <span className="font-semibold">{r.studentName}</span> sent an attendance request
                     {fresh.has(r.id) && (
                       <span className="ml-2 rounded-full bg-blue-700 px-2 py-0.5 text-xs font-semibold text-white">
@@ -148,7 +148,7 @@ export default function AdminHome() {
                       </span>
                     )}
                   </p>
-                  <p className="mt-1 truncate text-xs text-slate-500">
+                  <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
                     {r.className}
                     {r.semester ? ` · ${r.semester}` : ''}
                     {r.courseName ? ` · ${r.courseName}` : ''}
@@ -157,7 +157,7 @@ export default function AdminHome() {
                 </div>
                 <button
                   onClick={() => setViewing(r)}
-                  className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-100"
+                  className="shrink-0 rounded-xl bg-teal-700 hover:bg-teal-800 text-white dark:bg-teal-500 dark:hover:bg-teal-400 dark:text-slate-950 px-3.5 py-1.5 text-xs font-bold transition-all shadow-sm cursor-pointer"
                 >
                   View
                 </button>
@@ -167,10 +167,10 @@ export default function AdminHome() {
         )}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div className="rounded-2xl border border-slate-200/80 bg-white dark:bg-[#0b1f2a] dark:border-teal-900/40 p-5 shadow-md shadow-slate-200/50 dark:shadow-none sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-semibold text-slate-800">Phone Change Requests</h3>
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Phone Change Requests</h3>
+          <span className="rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200/60 dark:border-amber-800/60 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
             {changes.length} pending
           </span>
         </div>
@@ -185,10 +185,10 @@ export default function AdminHome() {
                   {c.studentName.charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-slate-800">
+                  <p className="text-sm text-slate-900 dark:text-slate-100">
                     <span className="font-semibold">{c.studentName}</span> asked for a phone change
                   </p>
-                  <p className="mt-1 truncate text-xs text-slate-500">
+                  <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
                     {c.className}
                     {c.rollNo ? ` · Roll ${c.rollNo}` : ''} · {formatTime(c.time)}
                   </p>

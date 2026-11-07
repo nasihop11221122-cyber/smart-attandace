@@ -29,13 +29,20 @@ export default function PrincipalTeacher() {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-2xl font-semibold text-slate-800">All Teachers</h2>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+            All Teachers
+          </h2>
+          <p className="mt-1 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+            Educational faculty, form masters and assigned classes.
+          </p>
+        </div>
         <button
           onClick={() => setCreating(true)}
-          className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+          className="inline-flex items-center gap-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white dark:bg-teal-500 dark:hover:bg-teal-400 dark:text-slate-950 px-4 py-2.5 text-sm font-bold shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer"
         >
-          Create
+          <span>Create Teacher</span>
         </button>
       </div>
 
@@ -46,54 +53,54 @@ export default function PrincipalTeacher() {
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {teachers.map((t) => (
-            <div key={t.id} className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="truncate text-lg font-semibold text-slate-800">{t.className}</h3>
-              <p className="mt-1 truncate text-sm text-slate-500">{t.name}</p>
+            <div
+              key={t.id}
+              className="group relative rounded-2xl border transition-all duration-200 overflow-hidden bg-white border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:-translate-y-1 dark:bg-[#0b1f2a] dark:border-teal-900/40 dark:shadow-none p-5 flex flex-col justify-between min-h-[195px]"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative flex-shrink-0 w-11 h-11 rounded-xl p-[2px] overflow-hidden">
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-[-100%] animate-[spin_8s_linear_infinite]"
+                        style={{
+                          background: 'conic-gradient(from 0deg, #14b8a6, #6366f1, #ec4899, #14b8a6)',
+                        }}
+                      />
+                      <div className="relative w-full h-full rounded-[10px] bg-white dark:bg-[#0b1f2a] flex items-center justify-center font-bold text-xs tracking-wider text-teal-800 dark:text-teal-300 select-none">
+                        {t.name ? t.name.slice(0, 2).toUpperCase() : 'TR'}
+                      </div>
+                    </div>
 
-              <div className="mt-4 flex gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-100">{t.name}</h3>
+                      <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400 font-mono">{t.email}</p>
+                    </div>
+                  </div>
+
+                  <span className="flex-shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200/70 dark:bg-teal-950/60 dark:text-teal-300 dark:border-teal-800/60">
+                    {t.className || 'No class'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-end gap-2">
                 <button
                   onClick={() => setEditing(t)}
                   title="Update"
                   aria-label="Update teacher"
-                  className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-blue-700 hover:text-white"
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/70 text-slate-700 dark:text-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-4 w-4"
-                  >
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                  </svg>
+                  Edit
                 </button>
-
                 <button
                   onClick={() => setDeleting(t)}
                   title="Delete"
                   aria-label="Delete teacher"
-                  className="grid h-9 w-9 place-items-center rounded-md border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white"
+                  className="rounded-xl border border-red-200/60 dark:border-red-900/50 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 px-3 py-1.5 text-xs font-semibold hover:bg-red-600 hover:text-white dark:hover:bg-red-700 transition-all cursor-pointer"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-4 w-4"
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                    <path d="M10 11v6" />
-                    <path d="M14 11v6" />
-                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                  </svg>
+                  Delete
                 </button>
               </div>
             </div>

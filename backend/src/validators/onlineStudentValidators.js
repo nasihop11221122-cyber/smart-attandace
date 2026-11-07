@@ -32,3 +32,18 @@ export const onlineStudentUpdateSchema = z.object({
   email,
   password: password.optional(),
 });
+
+export const bulkOnlineStudentSchema = z.object({
+  classId,
+  students: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1, 'Name is required').max(60),
+        rollNo: z.string().trim().min(1, 'Roll number is required').max(30),
+        email: z.string().trim().toLowerCase().email('Valid email is required'),
+        password: z.string().min(6).max(72).optional().or(z.literal('')),
+      })
+    )
+    .min(1, 'At least 1 student is required')
+    .max(1000, 'Maximum 1000 students allowed in one bulk import'),
+});
