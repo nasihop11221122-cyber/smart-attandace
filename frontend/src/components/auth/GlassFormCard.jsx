@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye,
@@ -367,6 +368,16 @@ export default function GlassFormCard({
                     <span>SIGN IN</span>
                   )}
                 </motion.button>
+
+                {/* Forgot Password Link */}
+                <div className="mt-1 text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-[12px] font-medium text-[#1b2230]/75 hover:text-[#1e6bff] transition-colors cursor-pointer"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
 
                 {/* Flip Switch to Sign Up */}
                 <div className="mt-1 text-center">
