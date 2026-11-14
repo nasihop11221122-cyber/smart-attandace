@@ -3,10 +3,14 @@ import {
   getSchoolHolidays,
   createSchoolHoliday,
   deleteSchoolHoliday,
+  updateSchoolWeeklyOffs,
 } from '../controllers/schoolHolidayController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { createSchoolHolidaySchema } from '../validators/schoolHolidayValidators.js';
+import {
+  createSchoolHolidaySchema,
+  updateSchoolWeeklyOffsSchema,
+} from '../validators/schoolHolidayValidators.js';
 
 const router = Router();
 
@@ -24,6 +28,7 @@ router.use(protect, onlyPrincipal);
 
 router.get('/', wrap(getSchoolHolidays));
 router.post('/', validate(createSchoolHolidaySchema), wrap(createSchoolHoliday));
+router.put('/weekly-offs', validate(updateSchoolWeeklyOffsSchema), wrap(updateSchoolWeeklyOffs));
 router.delete('/:id', wrap(deleteSchoolHoliday));
 
 export default router;

@@ -2,12 +2,12 @@ import mongoose from 'mongoose';
 import AttendanceRequest from '../models/AttendanceRequest.js';
 import ProgramClass from '../models/ProgramClass.js';
 import Course from '../models/Course.js';
-import Holiday from '../models/Holiday.js';
 import User from '../models/User.js';
 import { dateInSchoolZone, minutesInSchoolZone } from '../utils/schoolDate.js';
 import { findRunningCourse, toHHMM } from '../utils/courseTime.js';
 import { evaluateLocation } from '../utils/locationCheck.js';
 import { DEVICE_ID_REGEX } from '../validators/deviceValidators.js';
+import { isCollegeHoliday } from '../utils/holidayCheck.js';
 
 const publicLocationCheck = (r) =>
   r.locationCheck?.verdict
@@ -101,8 +101,8 @@ export const getMyRequest = async (req, res) => {
   ]);
 
   // On a holiday no course is running
-  const holiday = await Holiday.findOne({ date }).select('title');
-  const course = holiday ? null : await runningCourseOf(me, date);
+  const holidayCheck = await isCollegeHoliday(date);
+  const course = holidayCheck.isHoliday ? null : await runningCourseOf(me, date);
   const today = course
     ? await AttendanceRequest.findOne({ student: req.user._id, courseId: course._id, date })
     : null;
@@ -125,7 +125,7 @@ export const getMyRequest = async (req, res) => {
           endTime: toHHMM(course.endMin),
         }
       : null,
-    holiday: holiday ? { title: holiday.title || '' } : null,
+    holiday: holidayCheck.isHoliday ? { title: holidayCheck.title || holidayCheck.reason || '' } : null,
     request: today ? { id: String(today._id), status: today.status, createdAt: today.createdAt } : null,
     counts,
     device: {
@@ -222,8 +222,9 @@ export const createMyRequest = async (req, res) => {
   // A phone that belongs to another student cannot be used by this student
   if (!me.deviceId && (await usedByAnotherStudent(deviceId, me._id))) return deviceInUse(res);
 
-  if (await Holiday.exists({ date })) {
-    return res.status(400).json({ message: 'Today is a holiday' });
+  const todayHol = await isCollegeHoliday(date);
+  if (todayHol.isHoliday) {
+    return res.status(400).json({ message: `Today is a holiday (${todayHol.reason || 'Day Off'})` });
   }
 
   // Attendance can only be marked for the course that is running right now

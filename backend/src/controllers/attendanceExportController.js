@@ -1,10 +1,10 @@
 import AttendanceRequest from '../models/AttendanceRequest.js';
 import Course from '../models/Course.js';
-import Holiday from '../models/Holiday.js';
 import ProgramClass, { classLabel } from '../models/ProgramClass.js';
 import User from '../models/User.js';
 import { buildCourseReport } from '../utils/attendanceReport.js';
 import { dateInSchoolZone, minutesInSchoolZone } from '../utils/schoolDate.js';
+import { getCollegeHolidaySet } from '../utils/holidayCheck.js';
 
 const byName = (a, b) => a.localeCompare(b, 'en', { numeric: true, sensitivity: 'base' });
 
@@ -15,11 +15,10 @@ export const getHistoryExport = async (req, res) => {
   const today = dateInSchoolZone();
   const nowMin = minutesInSchoolZone();
 
-  const [classes, holidayRows] = await Promise.all([
+  const [classes, holidays] = await Promise.all([
     ProgramClass.find(),
-    Holiday.find({ date: { $lte: today } }).select('date'),
+    getCollegeHolidaySet('2024-01-01', today),
   ]);
-  const holidays = new Set(holidayRows.map((h) => h.date));
 
   classes.sort((a, b) => byName(a.program, b.program) || byName(a.semester, b.semester));
 

@@ -1,9 +1,9 @@
 import AttendanceRequest from '../models/AttendanceRequest.js';
 import Course from '../models/Course.js';
-import Holiday from '../models/Holiday.js';
 import { toHHMM } from './courseTime.js';
 import { buildCourseReport } from './attendanceReport.js';
 import { dateInSchoolZone, minutesInSchoolZone } from './schoolDate.js';
+import { getCollegeHolidaySet } from './holidayCheck.js';
 
 // Present, pending and absent dates of one student for every course.
 // `student` needs: _id, classId, createdAt
@@ -12,12 +12,11 @@ export const buildStudentAttendance = async (student) => {
   const nowMin = minutesInSchoolZone();
   const joinedDate = dateInSchoolZone(student.createdAt);
 
-  const [courses, records, holidayRows] = await Promise.all([
+  const [courses, records, holidays] = await Promise.all([
     student.classId ? Course.find({ classId: student.classId }).sort({ startMin: 1 }) : [],
     AttendanceRequest.find({ student: student._id }).select('courseId courseName date status'),
-    Holiday.find({ date: { $lte: today } }).select('date'),
+    getCollegeHolidaySet(joinedDate || '2024-01-01', today),
   ]);
-  const holidays = new Set(holidayRows.map((h) => h.date));
 
   // Group the saved requests by course (records from before the courses have no course)
   const byCourse = new Map();

@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
 import AttendanceRequest from '../models/AttendanceRequest.js';
 import Course from '../models/Course.js';
-import Holiday from '../models/Holiday.js';
 import User from '../models/User.js';
 import { runsOnDate } from '../utils/courseTime.js';
 import { dateInSchoolZone } from '../utils/schoolDate.js';
+import { isCollegeHoliday } from '../utils/holidayCheck.js';
 
 const STATUS_FOR = { present: 'accepted', absent: 'rejected' };
 const LABEL_FOR = { accepted: 'Present', rejected: 'Absent' };
@@ -72,8 +72,9 @@ export const markStudentPresent = async (req, res) => {
   if (!runsOnDate(course, date)) {
     return res.status(400).json({ message: 'This course is not held on this date' });
   }
-  if (await Holiday.exists({ date })) {
-    return res.status(400).json({ message: 'This date is a holiday' });
+  const hol = await isCollegeHoliday(date);
+  if (hol.isHoliday) {
+    return res.status(400).json({ message: `This date is a holiday (${hol.reason || 'Day Off'})` });
   }
 
   const existing = await AttendanceRequest.findOne({ student: student._id, courseId: course._id, date });

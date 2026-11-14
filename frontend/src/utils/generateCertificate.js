@@ -1,4 +1,17 @@
-import { jsPDF } from 'jspdf';
+import * as jspdfPkg from 'jspdf';
+
+const jsPDF = jspdfPkg.jsPDF || jspdfPkg.default?.jsPDF || jspdfPkg.default || jspdfPkg;
+
+const saveBlob = (blob, filename) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
 
 /**
  * Generates an official, colorful, high-resolution Landscape Certificate PDF
@@ -6,9 +19,15 @@ import { jsPDF } from 'jspdf';
  * @param {String} instituteName - Name of the institute/college
  */
 export async function generateStudentCertificate(student, instituteName = 'Smart Attendance Institute') {
-  if (!student || !student.name) {
-    throw new Error('Student data is missing or student name is not available');
+  if (!student) {
+    throw new Error('Student data is missing');
   }
+
+  const studentName = String(student.name || 'Valued Student').trim();
+  const rollText = student.rollNo ? `(Roll No: #${student.rollNo})` : '';
+  const className = String(student.program || student.className || 'Academic Program');
+  const pct = student.attendancePercent ?? 100;
+  const certId = student.certificateId || `CERT-${String(student.id || Date.now()).slice(-6).toUpperCase()}`;
 
   // A4 Landscape: 297mm x 210mm
   const doc = new jsPDF({
@@ -40,7 +59,7 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   doc.setLineWidth(0.3);
   doc.rect(16, 16, width - 32, height - 32);
 
-  // 3. Four Corner Ornaments (Classic geometric brackets)
+  // 3. Four Corner Ornaments
   const drawCorner = (x, y, xDir, yDir) => {
     doc.setDrawColor(217, 119, 6);
     doc.setLineWidth(2);
@@ -78,8 +97,6 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   doc.setDrawColor(217, 119, 6);
   doc.setLineWidth(0.6);
   doc.line(width / 2 - 60, 54, width / 2 + 60, 54);
-  doc.setFillColor(217, 119, 6);
-  // Diamond (drawn with lines since jsPDF has no polygon method)
   const cx = width / 2;
   const cy = 54;
   doc.setFillColor(217, 119, 6);
@@ -95,10 +112,10 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   doc.setFont('times', 'bold');
   doc.setTextColor(15, 118, 110); // Rich Teal / Navy #0f766e
   doc.setFontSize(28);
-  doc.text(student.name || 'Student Name', width / 2, 78, { align: 'center' });
+  doc.text(studentName, width / 2, 78, { align: 'center' });
 
   // Gold Underline beneath Student Name
-  const nameWidth = doc.getTextWidth(student.name || 'Student Name');
+  const nameWidth = doc.getTextWidth(studentName);
   doc.setDrawColor(217, 119, 6);
   doc.setLineWidth(0.8);
   doc.line(width / 2 - (nameWidth / 2 + 8), 81, width / 2 + (nameWidth / 2 + 8), 81);
@@ -107,9 +124,6 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(51, 65, 85);
   doc.setFontSize(11);
-
-  const className = student.program || student.className || 'Academic Program';
-  const rollText = student.rollNo ? `(Roll No: #${student.rollNo})` : '';
 
   doc.text(
     `for successfully passing out and completing academic tenure in`,
@@ -121,7 +135,7 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
   doc.setFontSize(13);
-  doc.text(`${className} ${rollText}`, width / 2, 99, { align: 'center' });
+  doc.text(`${className} ${rollText}`.trim(), width / 2, 99, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(71, 85, 105);
@@ -134,7 +148,6 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   );
 
   // 8. Attendance Standing Ribbon / Badge (Center Display)
-  const pct = student.attendancePercent ?? 100;
   const badgeY = 120;
   doc.setFillColor(240, 253, 250); // Light Teal
   doc.setDrawColor(13, 148, 136); // Teal 600
@@ -158,7 +171,7 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
     ? new Date(student.graduatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-  doc.text(`Certificate No: ${student.certificateId || 'CERT-OFFICIAL'}`, 30, footerY);
+  doc.text(`Certificate No: ${certId}`, 30, footerY);
   doc.text(`Issued On: ${issueDate}`, 30, footerY + 6);
   doc.text('Verification: Official Registry', 30, footerY + 12);
 
@@ -166,7 +179,6 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   const sealX = width / 2;
   const sealY = footerY + 4;
 
-  // Outer Starburst/Petals effect
   doc.setFillColor(254, 243, 199); // Light Amber
   doc.setDrawColor(217, 119, 6);
   doc.setLineWidth(1);
@@ -188,7 +200,6 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   doc.setLineWidth(0.6);
   doc.line(sigX, footerY + 2, sigX + 50, footerY + 2);
 
-  // Stamp cursive signature
   doc.setFont('times', 'italic');
   doc.setTextColor(15, 118, 110);
   doc.setFontSize(14);
@@ -204,10 +215,15 @@ export async function generateStudentCertificate(student, instituteName = 'Smart
   doc.setFontSize(8);
   doc.text('Principal / Head of Institute', sigX + 25, footerY + 12, { align: 'center' });
 
-  // Save the PDF
-  const safeName = (student.name || 'Unknown').replace(/\s+/g, '_');
+  // Save the PDF with fallback
+  const safeName = studentName.replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = `${safeName}_Completion_Certificate.pdf`;
-  doc.save(filename);
+
+  try {
+    doc.save(filename);
+  } catch (err) {
+    console.warn('doc.save failed, trying blob fallback:', err);
+    const blob = doc.output('blob');
+    saveBlob(blob, filename);
+  }
 }
-
-

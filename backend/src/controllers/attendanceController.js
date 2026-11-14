@@ -1,9 +1,9 @@
 import Attendance from '../models/Attendance.js';
 import AttendanceDraft from '../models/AttendanceDraft.js';
-import SchoolHoliday from '../models/SchoolHoliday.js';
 import Student from '../models/Student.js';
 import User from '../models/User.js';
 import { dateInSchoolZone } from '../utils/schoolDate.js';
+import { isSchoolHoliday } from '../utils/holidayCheck.js';
 
 const NO_CLASS = 'No class is assigned to you yet';
 const BAD_DATE = 'The attendance date does not match today. Please reload the page and try again';
@@ -36,11 +36,11 @@ export const getAttendance = async (req, res) => {
     });
   }
 
-  const [students, saved, draft, holiday, countRows] = await Promise.all([
+  const [students, saved, draft, holidayInfo, countRows] = await Promise.all([
     Student.find({ className }).sort({ rollNo: 1 }),
     Attendance.findOne({ className, date }),
     AttendanceDraft.findOne({ className, date }),
-    SchoolHoliday.findOne({ date }),
+    isSchoolHoliday(date),
     Attendance.aggregate([
       { $match: { className } },
       { $unwind: '$records' },
@@ -66,10 +66,10 @@ export const getAttendance = async (req, res) => {
   res.json({
     className,
     date,
-    holiday: holiday ? { title: holiday.title || '' } : null,
+    holiday: holidayInfo?.isHoliday ? { title: holidayInfo.title || holidayInfo.reason || '' } : null,
     submitted: Boolean(saved),
     draft:
-      !saved && !holiday && draft
+      !saved && !holidayInfo?.isHoliday && draft
         ? {
             absent: draft.absent.map(String),
             leave: draft.leave.map(String),
@@ -99,7 +99,8 @@ export const saveDraft = async (req, res) => {
   const className = await getTeacherClass(req);
   if (!className) return res.status(400).json({ message: NO_CLASS });
 
-  if (await SchoolHoliday.exists({ date })) return holidayBlocked(res);
+  const holCheck = await isSchoolHoliday(date);
+  if (holCheck.isHoliday) return holidayBlocked(res);
 
   const alreadyDone = await Attendance.exists({ className, date });
   if (alreadyDone) return res.status(409).json({ message: ALREADY });
@@ -129,7 +130,8 @@ export const createAttendance = async (req, res) => {
   const className = await getTeacherClass(req);
   if (!className) return res.status(400).json({ message: NO_CLASS });
 
-  if (await SchoolHoliday.exists({ date })) return holidayBlocked(res);
+  const holCheck = await isSchoolHoliday(date);
+  if (holCheck.isHoliday) return holidayBlocked(res);
 
   const students = await Student.find({ className }).select('_id');
   if (students.length === 0) {
