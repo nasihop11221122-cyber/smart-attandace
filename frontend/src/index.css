@@ -15,7 +15,12 @@
   text-align: right;
 }
 
-/* Ensure all page titles and headings are 100% crisp, prominent, and wazih in both themes */
+/* =========================================================
+   PAGE TITLES & HEADINGS (LIGHT: BLACK / DARK: WHITE)
+   WELCOME BANNERS: ALWAYS PURE WHITE
+   ========================================================= */
+
+/* Dark Mode: Crisp White Headings */
 [data-theme="dark"] h1,
 [data-theme="dark"] h2,
 .dark h1,
@@ -29,11 +34,30 @@
   color: #f8fafc;
 }
 
+/* Light Mode: Sharp, Elegant Dark Slate / Black Headings */
 [data-theme="light"] h1,
 [data-theme="light"] h2,
 :root:not(.dark):not([data-theme="dark"]) h1,
 :root:not(.dark):not([data-theme="dark"]) h2 {
-  color: #0f172a;
+  color: #0f172a !important;
+  text-shadow: none;
+}
+
+/* EXCEPT Welcome Cards & Gradient Banners: ALWAYS 100% PURE WHITE in BOTH modes */
+[class*="bg-gradient"] h1,
+[class*="bg-gradient"] h2,
+[class*="bg-gradient"] h3,
+.text-white h1,
+.text-white h2,
+.text-white h3,
+[data-theme="light"] [class*="bg-gradient"] h1,
+[data-theme="light"] [class*="bg-gradient"] h2,
+[data-theme="light"] [class*="bg-gradient"] h3,
+:root:not(.dark):not([data-theme="dark"]) [class*="bg-gradient"] h1,
+:root:not(.dark):not([data-theme="dark"]) [class*="bg-gradient"] h2,
+:root:not(.dark):not([data-theme="dark"]) [class*="bg-gradient"] h3 {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 

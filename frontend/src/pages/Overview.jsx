@@ -132,7 +132,7 @@ export default function Overview() {
         <div className="absolute -bottom-14 right-28 h-36 w-36 rounded-full bg-white/10" />
         <div className="relative">
           <p className="text-sm text-blue-100">{today}</p>
-          <h2 className="mt-1 text-2xl font-semibold sm:text-3xl">
+          <h2 className="mt-1 text-2xl font-semibold sm:text-3xl !text-white">
             {greeting()}, {user?.name}
           </h2>
           <p className="mt-2 max-w-xl text-sm text-blue-100">
