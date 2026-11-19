@@ -1,24 +1,46 @@
-import webpush from 'web-push';
 import { env } from '../config/env.js';
 import PushSubscription from '../models/PushSubscription.js';
 
-// Configure VAPID once at module load
-if (env.vapid.publicKey && env.vapid.privateKey) {
-  webpush.setVapidDetails(
-    env.vapid.subject,
-    env.vapid.publicKey,
-    env.vapid.privateKey
-  );
+/**
+ * Lazy-load web-push so a missing/broken package never crashes the whole backend.
+ * Returns null if the package is unavailable.
+ */
+let _webpush = null;
+let _configured = false;
+
+async function getWebPush() {
+  if (_webpush) return _webpush;
+  try {
+    const mod = await import('web-push');
+    _webpush = mod.default ?? mod;
+
+    // Configure VAPID on first successful load
+    if (!_configured && env.vapid.publicKey && env.vapid.privateKey) {
+      _webpush.setVapidDetails(
+        env.vapid.subject,
+        env.vapid.publicKey,
+        env.vapid.privateKey
+      );
+      _configured = true;
+    }
+    return _webpush;
+  } catch (err) {
+    console.warn('web-push unavailable — push notifications disabled:', err.message);
+    return null;
+  }
 }
 
 /**
  * Send a push notification to ALL subscribed browsers of a user.
  *
- * @param {string|ObjectId} userId   - The User._id of the recipient
+ * @param {string|ObjectId} userId
  * @param {{ title: string, body: string, icon?: string, url?: string }} payload
  */
 export const sendPushToUser = async (userId, payload) => {
   if (!env.vapid.publicKey) return; // VAPID not configured — skip silently
+
+  const webpush = await getWebPush();
+  if (!webpush) return; // package not available — skip silently
 
   const subscriptions = await PushSubscription.find({ userId });
   if (!subscriptions.length) return;
@@ -26,8 +48,8 @@ export const sendPushToUser = async (userId, payload) => {
   const notification = JSON.stringify({
     title: payload.title,
     body:  payload.body,
-    icon:  payload.icon  || '/logo192.png',
-    badge: '/logo192.png',
+    icon:  payload.icon  || '/icon-192x192.png',
+    badge: '/icon-192x192.png',
     url:   payload.url   || '/',
   });
 
@@ -41,7 +63,7 @@ export const sendPushToUser = async (userId, payload) => {
           notification
         );
       } catch (err) {
-        // 410 Gone = subscription expired/revoked → remove it
+        // 410 Gone / 404 = subscription expired or revoked → clean up
         if (err.statusCode === 410 || err.statusCode === 404) {
           staleIds.push(sub._id);
         } else {
@@ -57,7 +79,7 @@ export const sendPushToUser = async (userId, payload) => {
 };
 
 /**
- * Convenience: send absent alert to a student.
+ * Convenience: absent alert for a student.
  * @param {string|ObjectId} userId
  * @param {{ name: string, courseName?: string, date: string }} info
  */
