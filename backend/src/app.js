@@ -25,6 +25,7 @@ import attendanceHistoryRoutes from './routes/attendanceHistoryRoutes.js';
 import historyExportRoutes from './routes/historyExportRoutes.js';
 import systemSettingRoutes from './routes/systemSettingRoutes.js';
 import teacherHistoryExportRoutes from './routes/teacherHistoryExportRoutes.js';
+import pushRoutes from './routes/pushRoutes.js';
 const app = express();
 
 app.set('trust proxy', 1); // Render/Railway/Heroku proxy ke peeche zaroori hai (secure cookie + rate limit)
@@ -80,6 +81,7 @@ app.use('/api/principal/holidays', schoolHolidayRoutes);
 app.use('/api/admin/history', attendanceHistoryRoutes);
 app.use('/api/system/settings', systemSettingRoutes);
 app.use('/api/teacher/history-export', teacherHistoryExportRoutes);
+app.use('/api/push', pushRoutes);
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // eslint-disable-next-line no-unused-varsa

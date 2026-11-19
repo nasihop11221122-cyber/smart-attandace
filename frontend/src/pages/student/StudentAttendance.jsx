@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import { getCurrentLocation } from '../../utils/getLocation';
 import { getDeviceId } from '../../utils/deviceId';
+import { initPushNotifications } from '../../utils/pushSubscribe';
 
 const formatDate = (value) =>
   new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', {
@@ -37,6 +38,8 @@ export default function StudentAttendance() {
 
   useEffect(() => {
     load();
+    // Push notifications: request permission once when student opens their page
+    initPushNotifications();
   }, [load]);
 
   const course = data?.course || null;

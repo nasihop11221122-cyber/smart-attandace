@@ -8,6 +8,7 @@ import { findRunningCourse, toHHMM } from '../utils/courseTime.js';
 import { evaluateLocation } from '../utils/locationCheck.js';
 import { DEVICE_ID_REGEX } from '../validators/deviceValidators.js';
 import { isCollegeHoliday } from '../utils/holidayCheck.js';
+import { sendAbsentAlert } from '../utils/sendPushAlert.js';
 
 const publicLocationCheck = (r) =>
   r.locationCheck?.verdict
@@ -61,6 +62,18 @@ export const decideRequest = async (req, res) => {
     return res.status(exists ? 409 : 404).json({
       message: exists ? 'This request has already been decided' : 'Request not found',
     });
+  }
+
+  // Push alert: agar student ko reject kiya (absent mark hua) → notification bhejo
+  if (status === 'rejected') {
+    const student = await User.findById(updated.student).select('name').lean();
+    if (student) {
+      sendAbsentAlert(updated.student, {
+        name:       student.name,
+        courseName: updated.courseName || '',
+        date:       updated.date,
+      }).catch((err) => console.error('Push alert failed:', err.message));
+    }
   }
 
   res.json({ message: `Request ${status}` });
