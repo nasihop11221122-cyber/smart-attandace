@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import { getCurrentLocation } from '../../utils/getLocation';
 import { getDeviceId } from '../../utils/deviceId';
 import { initPushNotifications } from '../../utils/pushSubscribe';
+import { isFaceRegistered, registerFace, verifyFaceSilently } from '../../utils/silentFaceScan';
 
 const formatDate = (value) =>
   new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', {
@@ -26,6 +27,11 @@ export default function StudentAttendance() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  // Face recognition states
+  const [faceRegistered, setFaceRegistered] = useState(null); // null = loading
+  const [faceScanning, setFaceScanning] = useState(false);
+  const [registering, setRegistering] = useState(false);
+
   const load = useCallback(async () => {
     try {
       const res = await api.get('/student/attendance', { params: { deviceId: getDeviceId() } });
@@ -40,6 +46,8 @@ export default function StudentAttendance() {
     load();
     // Push notifications: request permission once when student opens their page
     initPushNotifications();
+    // Check if face is registered
+    isFaceRegistered().then(setFaceRegistered);
   }, [load]);
 
   const course = data?.course || null;
@@ -63,6 +71,22 @@ export default function StudentAttendance() {
   const send = async () => {
     setBusy(true);
     try {
+      // ── Face verification (silent, background) ──
+      if (faceRegistered) {
+        setFaceScanning(true);
+        toast.info('Verifying identity…', { autoClose: 2000 });
+        const faceResult = await verifyFaceSilently();
+        setFaceScanning(false);
+
+        if (!faceResult.verified) {
+          toast.error('Face verification failed. Please try again in good lighting.');
+          setBusy(false);
+          return;
+        }
+        toast.success('Identity verified ✓', { autoClose: 1500 });
+      }
+
+      // ── GPS + Attendance submit ──
       let location;
       try {
         location = await getCurrentLocation();
@@ -83,6 +107,26 @@ export default function StudentAttendance() {
       if (httpStatus === 409 || httpStatus === 400 || code === 'device_mismatch') await load();
     } finally {
       setBusy(false);
+      setFaceScanning(false);
+    }
+  };
+
+  // ── Face registration handler ──
+  const handleRegisterFace = async () => {
+    setRegistering(true);
+    toast.info('Opening camera… look straight at the screen', { autoClose: 3000 });
+    try {
+      const result = await registerFace();
+      if (result.success) {
+        toast.success('Face registered successfully! ✓');
+        setFaceRegistered(true);
+      } else {
+        toast.error(result.message || 'Face registration failed. Try again.');
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -193,14 +237,16 @@ export default function StudentAttendance() {
               {!otherPhone && (!status || status === 'rejected') && (
                 <button
                   onClick={send}
-                  disabled={busy}
+                  disabled={busy || registering}
                   className="mt-4 w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {busy
-                    ? 'Please wait…'
-                    : status === 'rejected'
-                      ? 'Send Again'
-                      : 'Send Attendance Request'}
+                  {faceScanning
+                    ? '🔍 Verifying face…'
+                    : busy
+                      ? 'Please wait…'
+                      : status === 'rejected'
+                        ? 'Send Again'
+                        : 'Send Attendance Request'}
                 </button>
               )}
             </>
@@ -208,8 +254,35 @@ export default function StudentAttendance() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-xs">
-        <div className="rounded-xl bg-green-50 py-3">
+      {/* ── Face Registration Banner ── */}
+      {faceRegistered === false && (
+        <div className="rounded-2xl border border-purple-200 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-800 p-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">🔒</span>
+            <div className="flex-1">
+              <p className="font-semibold text-purple-900 dark:text-purple-200">Secure Your Attendance</p>
+              <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">
+                Register your face once for extra security. Your photo is never stored — only a secure fingerprint of 128 numbers.
+              </p>
+              <button
+                onClick={handleRegisterFace}
+                disabled={busy || registering}
+                className="mt-3 rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-800 disabled:opacity-60"
+              >
+                {registering ? 'Opening camera…' : '📸 Register Face (One-time)'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {faceRegistered === true && (
+        <p className="text-xs text-center text-green-600 dark:text-green-400">
+          🔒 Face verification active — your attendance is secured
+        </p>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-xs">        <div className="rounded-xl bg-green-50 py-3">
           <p className="text-2xl font-semibold text-green-700">{data.counts.accepted}</p>
           <p className="text-slate-500 dark:text-slate-400">Accepted</p>
         </div>
