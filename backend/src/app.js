@@ -20,6 +20,7 @@ import holidayRoutes from './routes/holidayRoutes.js';
 import onlineStudentRoutes from './routes/onlineStudentRoutes.js';
 import onlineRequestRoutes from './routes/onlineRequestRoutes.js';
 import studentRequestRoutes from './routes/studentRequestRoutes.js';
+import publicRoutes from './routes/publicRoutes.js';
 import { requireXHR } from './middleware/csrf.js';
 import attendanceHistoryRoutes from './routes/attendanceHistoryRoutes.js';
 import historyExportRoutes from './routes/historyExportRoutes.js';
@@ -84,6 +85,7 @@ app.use('/api/system/settings', systemSettingRoutes);
 app.use('/api/teacher/history-export', teacherHistoryExportRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/face', faceRoutes);
+app.use('/api/public', publicRoutes);
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // eslint-disable-next-line no-unused-varsa

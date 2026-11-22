@@ -8,6 +8,7 @@ import EmergencyLockdownOverlay from './components/EmergencyLockdownOverlay';
 import PwaInstallPrompt from './components/pwa/PwaInstallPrompt';
 import { ProtectedRoute, PublicRoute } from './components/RouteGuards';
 import Home from './pages/Home';
+import ParentCheck from './pages/ParentCheck';
 import AuthForm from './pages/AuthForm';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -53,6 +54,7 @@ export default function App() {
             <PwaInstallPrompt />
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/parent-check" element={<ParentCheck />} />
               <Route path="/student-cards" element={<StudentCards />} />
               <Route path="/login" element={<PublicRoute><AuthForm mode="login" /></PublicRoute>} />
               <Route path="/register" element={<PublicRoute><AuthForm mode="register" /></PublicRoute>} />

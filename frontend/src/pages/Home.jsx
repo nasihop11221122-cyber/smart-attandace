@@ -11,6 +11,7 @@ import {
   Smartphone,
   ArrowUpRight,
   ChevronRight,
+  Search,
 } from 'lucide-react';
 import AttendanceLogo3D from '../components/home/AttendanceLogo3D';
 import BadgeLogo3D from '../components/home/BadgeLogo3D';
@@ -407,6 +408,17 @@ export default function Home() {
                   onClick={handleCardClick}
                 />
               ))}
+              {/* Check Your Child Button Section */}
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/parent-check')}
+                  className="w-full rounded-2xl border border-[#3B4CCA] bg-[#3B4CCA] px-4 py-3 sm:px-5 sm:py-3.5 text-center text-sm sm:text-base font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#2F3DAA] hover:shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <Search className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.2} />
+                  Check Your Child
+                </button>
+              </div>
             </div>
           </div>
         </section>
