@@ -60,6 +60,22 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
+/* Explicit Text Color Overrides (must win over gradient rule) */
+.text-black,
+.text-black h1,
+.text-black h2,
+.text-black h3,
+h1.text-black,
+h2.text-black,
+h3.text-black,
+p.text-black,
+span.text-black,
+[style*="color: rgb(0, 0, 0)"],
+[style*="color: #000000"] {
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
 
 /* =========================================================
    10 ULTRA-WONDERFUL TEMPLATES (LIGHT & DARK VARIATIONS)
