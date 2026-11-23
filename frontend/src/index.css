@@ -554,3 +554,20 @@ span.text-black,
 .pulse-glow {
   animation: pulseGlow 3s infinite ease-in-out;
 }
+
+/* =========================================================
+   HOME PAGE SCOPED DESIGN TOKENS (IBRANIX VISUAL STYLE)
+   ========================================================= */
+.home-page {
+  --home-primary-dark: #0f2a38;
+  --home-accent: #14b8a6;
+  --home-accent-hover: #0d9488;
+  --home-bg-light: #f8fafc;
+  --home-bg-card: #ffffff;
+  --home-text-primary: #0f2a38;
+  --home-text-muted: #526b7a;
+  --home-border: rgba(15, 42, 56, 0.09);
+  --home-border-hover: rgba(20, 184, 166, 0.4);
+  --home-shadow: 0 4px 20px -2px rgba(15, 42, 56, 0.05), 0 2px 6px -1px rgba(15, 42, 56, 0.03);
+  --home-shadow-hover: 0 14px 30px -4px rgba(15, 42, 56, 0.1), 0 4px 12px -2px rgba(20, 184, 166, 0.08);
+}
